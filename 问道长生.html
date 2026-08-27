@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>问道长生 · 网页版（作者：雾见川）</title>
+<style>
+:root{
+ --bg:#efece3;--paper:#FBF8F1;--ink:#3F3A34;--sub:#8C8578;--gold:#C9A45C;
+ --jade:#6FA698;--purp:#8B6FA8;--red:#C4675C;--pink:#D88FA5;--vio:#A98FD9;
+ --blue:#7FA8C9;--bam:#8FBFA0;--warn:#FBEDE9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(#e8e4d8,#efece3 240px);font-family:"KaiTi","STKaiti","Noto Serif SC",serif;color:var(--ink);min-height:100vh;padding-bottom:40px}
+#app{max-width:980px;margin:0 auto;padding:12px}
+h1.title{text-align:center;font-size:30px;letter-spacing:8px;color:#2B2620;margin:18px 0 2px}
+.sub{text-align:center;color:var(--sub);font-size:13px;margin-bottom:14px}
+.panel{background:var(--paper);border:2px solid var(--jade);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 3px 10px rgba(60,50,30,.12)}
+.panel.t-purp{border-color:var(--purp)}.panel.t-red{border-color:var(--red)}
+.panel.t-pink{border-color:var(--pink)}.panel.t-vio{border-color:var(--vio)}
+.panel.t-gold{border-color:var(--gold)}.panel.t-blue{border-color:var(--blue)}
+.panel.t-bam{border-color:var(--bam)}.panel.warnbg{background:var(--warn)}
+.bar-title{display:inline-block;background:var(--jade);color:#fff;font-weight:bold;padding:2px 14px;border-radius:4px;font-size:17px;margin:-26px 0 6px -4px}
+.t-purp>.bar-title{background:var(--purp)}.t-red>.bar-title{background:var(--red)}
+.t-pink>.bar-title{background:var(--pink)}.t-vio>.bar-title{background:var(--vio)}
+.t-gold>.bar-title{background:var(--gold)}.t-blue>.bar-title{background:var(--blue)}
+.t-bam>.bar-title{background:var(--bam)}
+.hr{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:8px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:4px 18px;font-size:14px}
+.btn{cursor:pointer;border:1.5px solid;border-color:#cfc7b4;border-radius:6px;background:#fff;padding:5px 10px;font-family:inherit;font-size:14px;color:var(--ink);transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.tag{color:#fff;font-weight:bold;border-radius:4px;padding:1px 7px;font-size:12px;display:inline-block}
+.b-jade{background:var(--jade)}.b-purp{background:var(--purp)}.b-red{background:var(--red)}
+.b-pink{background:var(--pink)}.b-vio{background:var(--vio)}.b-gold{background:var(--gold)}
+.b-blue{background:var(--blue)}.b-bam{background:var(--bam)}.b-gray{background:#B7AFA2}
+.pbj{height:11px;background:#E8E4DC;border-radius:6px;overflow:hidden;display:inline-block;vertical-align:middle;width:110px}
+.pbj>i{display:block;height:100%;border-radius:6px}
+.opt{display:block;border:1.5px solid #ddd6c8;border-radius:8px;padding:7px 10px;margin:5px 0;background:#fffdf7;cursor:pointer;font-size:14px}
+.opt.sel{border-color:var(--gold);background:#fdf6e3;box-shadow:0 0 0 1px var(--gold) inset}
+.opt small{color:var(--sub)}
+.log{max-height:42vh;overflow-y:auto;padding-right:4px;line-height:1.75;font-size:14.5px}
+.log p{margin:2px 0}.lg-n{color:var(--ink)}.lg-g{color:#6a9c72}.lg-r{color:#B23F33}.lg-y{color:#9a7420}.lg-p{color:#b25984}.lg-s{color:var(--sub);font-size:12.5px}
+.flexwrap{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.col-l{flex:1 1 520px;min-width:300px}.col-r{flex:0 0 295px;max-width:100%}
+.steer{position:sticky;top:8px}
+input[type=text],select{font-family:inherit;padding:5px 8px;border:1.5px solid #cfc7b4;border-radius:6px;background:#fffdf7;font-size:14px;width:100%}
+input[type=range]{width:100%}
+.step{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--jade);background:#fff;font-weight:bold;cursor:pointer;color:var(--jade)}
+.echip{display:inline-block;color:#fff;border-radius:3px;padding:0 6px;font-size:12px;margin-right:3px}
+.footer-cmd{color:var(--sub);font-size:12px;text-align:center;margin-top:8px}
+.big{font-size:18px;font-weight:bold;color:#2B2620}
+.danger{color:#B23F33;font-weight:bold}
+.center{text-align:center}
+@media(max-width:720px){.col-r{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===================== 存储保险丝 ===================== */
+let MEM={};
+function sGet(k){try{return localStorage.getItem(k);}catch(e){return MEM[k]||null;}}
+function sSet(k,v){try{localStorage.setItem(k,v);}catch(e){MEM[k]=v;}}
+function sDel(k){try{localStorage.removeItem(k);}catch(e){delete MEM[k];}}
+
+/* ===================== 工具 ===================== */
+const $=s=>document.querySelector(s);
+const RI=n=>Math.floor(Math.random()*n);
+const D100=()=>1+RI(100);
+const CL=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MN=['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+function tag(t,c){return '<span class="tag b-'+c+'">'+t+'</span>';}
+function pb(v,max,c){const p=CL(v/max*100,0,100);return '<span class="pbj"><i style="width:'+p+'%;background:'+c+'"></i></span>';}
+function panel(theme,title,body,warn){
+ return '<div class="panel t-'+theme+(warn?' warnbg':'')+'"><span class="bar-title">'+title+'</span><div class="hr"></div>'+body+'</div>';
+}
+
+/* ===================== 数据 ===================== */
+const EL={金:'#C9A45C',木:'#6BA38E',水:'#5E8FAE',火:'#C05F55',土:'#B08A4E'};
+const VAR={雷:'#8B6FA8',风:'#7F9C9C',冰:'#7FA8C9'};
+const RL=[
+ {n:'炼气',life:100,base:10,need:100},{n:'筑基',life:200,base:9,need:140},
+ {n:'结晶',life:300,base:8,need:190},{n:'金丹',life:500,base:8,need:260},
+ {n:'具灵',life:800,base:7,need:340},{n:'元婴',life:1200,base:7,need:470},
+ {n:'化神',life:2000,base:6,need:640},{n:'悟道',life:5000,base:5,need:950},
+ {n:'羽化',life:10000,base:4,need:1450},{n:'登仙',life:50000,base:3,need:2300}];
+const STG=['初期','中期','后期','圆满'];
+const ROOTS=[
+ {n:'天灵根',c:2.0,d:'单系 · 万中无一 · 修炼极快'},
+ {n:'地灵根',c:1.6,d:'双系主次分明'},
+ {n:'真灵根',c:1.3,d:'三系均衡'},
+ {n:'伪灵根',c:1.0,d:'四五系杂而不精 · 可修多系'},
+ {n:'变异灵根',c:1.8,d:'雷风冰之一 · 特殊功法适配 · 需机缘判定',varOnly:1}];
+const ORIGINS=[
+ {n:'农家子',d:'道心+2 · 无依无靠',f:p=>p.att[4]+=2},
+ {n:'猎户之后',d:'气血+30 · 熟悉山林',f:p=>{p.hpM+=30;p.att[3]+=1;}},
+ {n:'商贾之家',d:'灵石+300 · 仙缘+1',f:p=>{p.stones+=300;p.att[5]+=1;}},
+ {n:'官宦子弟',d:'声望+20 · 可走国师线',f:p=>p.rep+=20},
+ {n:'将门之后',d:'道心+1 悟性+1',f:p=>{p.att[4]+=1;p.att[1]+=1;}},
+ {n:'没落世家',d:'携先祖残卷（玄阶《长春功》）',f:p=>p.gongfa={n:'长春功',g:'玄'}},
+ {n:'市井孤儿',d:'遁速+2 · 三教九流皆识',f:p=>p.att[3]+=2},
+ {n:'书香门第',d:'悟性+3 · 过目不忘',f:p=>p.att[1]+=3},
+ {n:'方外遗孤',d:'资质+2 · 自幼随师',f:p=>p.att[0]+=2},
+ {n:'妖族后裔',d:'半妖之身 · 仙缘+2 · 可走妖修线',f:p=>{p.att[5]+=2;p.hpM+=20;}}];
+const PATHS=['问道飞升','逍遥长生','快意恩仇','守护所爱','问鼎天下','随心所欲'];
+const CONS=[
+ {n:'先天道体',d:'修炼效率×1.5'},{n:'剑灵体',d:'剑系威力+30%'},{n:'九阳圣体',d:'火系威力+30% 气血上限+40'},
+ {n:'冰魄灵体',d:'冰系威力+30%'},{n:'纯阳体/玄阴体',d:'双修增益 · 情缘线'},{n:'混沌体',d:'传说 · 五行皆通（需机缘）'},{n:'凡体',d:'无特殊'}];
+const TALENTS=[
+ {n:'天资聪颖',d:'资质+3',c:1,f:p=>p.att[0]+=3},{n:'过目不忘',d:'悟性+3',c:1,f:p=>p.att[1]+=3},
+ {n:'身轻如燕',d:'遁速+3',c:1,f:p=>p.att[3]+=3},{n:'天生道心',d:'道心+3',c:1,f:p=>p.att[4]+=3},
+ {n:'气运加身',d:'仙缘+3',c:1,f:p=>p.att[5]+=3},{n:'神识过人',d:'神识+3',c:1,f:p=>p.att[2]+=3},
+ {n:'百脉俱通',d:'灵力上限+60',c:1,f:p=>p.mpM+=60},{n:'钢筋铁骨',d:'气血上限+90',c:1,f:p=>p.hpM+=90},
+ {n:'桃花运',d:'好感收益+20%',c:1,f:p=>p.charmBonus=1.2},{n:'药理通神',d:'历练所得灵草加倍',c:1,f:p=>p.herbLuck=1},
+ {n:'体弱多病',d:'气血上限-50 · 返还2天赋点',c:-2,f:p=>p.hpM-=50}];
+const ATTN=['资质','悟性','神识','遁速','道心','仙缘'];
+const REGIONS=[
+ {n:'东洲 · 青岳',rec:1,d:'散修与凡人混居，青云宗与天机坊市所在',e:0},
+ {n:'南疆 · 赤炎',rec:2,d:'火脉妖兽横行，深处有化形妖王',e:1},
+ {n:'西漠 · 流沙',rec:3,d:'上古遗迹与佛门净土，魔渊深不可测',e:2},
+ {n:'北原 · 寒渊',rec:4,d:'雪族领地，幽冥殿鬼修出没',e:3},
+ {n:'中州 · 天阙',rec:3,d:'诸道统林立，卧虎藏龙，弱者寸步难行',e:4}];
+const REGNAME=['炼气/筑基','炼气/筑基','筑基~金丹','金丹~元婴','元婴~化神'];
+const NPCS=[
+ {id:'gqx',n:'顾清玄',sx:'男',ag:22,loc:0,d:'青云宗真传 · 温润剑修',like:['剑','清茶','山水']},
+ {id:'yq',n:'云栖',sx:'女',ag:25,loc:0,d:'天机坊市老板娘 · 聪慧狡黠',like:['灵石','奇闻','算计']},
+ {id:'swj',n:'谢无咎',sx:'男',ag:24,loc:1,d:'血魔宗少主 · 亦正亦邪',like:['烈酒','真心']},
+ {id:'bns',n:'白凝霜',sx:'女',ag:21,loc:3,d:'北原雪族圣女 · 清冷孤高',like:['雪','冰系灵植']},
+ {id:'mc',n:'墨尘',sx:'男',ag:'不祥',loc:1,d:'古妖山少主 · 化形妖族傲娇少年',like:['灵果','肉食','自由']},
+ {id:'lqq',n:'洛浅浅',sx:'女',ag:20,loc:1,d:'合欢宗弟子 · 多情却怕寂寞',like:['甜食','新鲜事']}];
+const MK=[
+ {n:'聚气丹',p:20,d:'修为+18',ty:'pill',fx:g=>addCult(g,18)},
+ {n:'回春丹',p:30,d:'气血+50',ty:'pill',fx:g=>heal(g,'hp',50)},
+ {n:'凝神丹',p:45,d:'灵力+50',ty:'pill',fx:g=>heal(g,'mp',50)},
+ {n:'破障丹',p:120,d:'修为+60（辅助冲关）',ty:'pill',fx:g=>addCult(g,60)},
+ {n:'火鳞符',p:25,d:'战斗 · 朱砂火符伤敌',ty:'fu'},
+ {n:'玄龟符',p:35,d:'战斗 · 大幅减免一次攻击',ty:'fu'},
+ {n:'遁地符',p:60,d:'战斗 · 瞬遁脱离',ty:'fu'},
+ {n:'人道破境丹',p:400,d:'大突破 · 人道引桥之媒',ty:'bao'},
+ {n:'天材地宝',p:900,d:'地道突破所需（两枚）',ty:'bao'},
+ {n:'五行灵珠',p:2600,d:'天道突破所需 · 须雷劫印证',ty:'zhu'},
+ {n:'玄阶功法残卷',p:850,d:'功法升为玄阶（修炼×1.3）',ty:'gf',to:{n:'长春功',g:'玄'}},
+ {n:'地阶功法孤本',p:3600,d:'功法升为地阶（×1.7）· 需结晶境',ty:'gf',req:2,to:{n:'太虚剑典',g:'地'}}];
+const GF={黄:{c:1.0},玄:{c:1.3},地:{c:1.7},天:{c:2.2}};
+const AWAKEN=['剑心通明（杀伤+20%）','丹药精通（丹效+30%）','气运如虹（仙缘+2）','肉身成圣（气血上限+25%）',
+ '天眼通（神识+3）','双修悟道（双修收益+50%）','聚灵体（修炼+15%）','心如磐石（道心+3，挡一次心魔）',
+ '万里神行（遁速+3）','灵兽亲和（历练更安全）','大道之体（六维+1）'];
+const WU_TREES=[{n:'剑道',d:'杀伤+6%/级'},{n:'丹道',d:'丹药效果+15%/级'},{n:'体道',d:'气血上限+8%/级'},
+ {n:'遁法',d:'遁走成功率+8%/级'},{n:'有情道',d:'好感收益+20%/级'}];
+
+/* ===================== 全局状态 ===================== */
+let G=null,C=null,DEAD=false;
+const LEGACY=()=>parseInt(sGet('wdcs_legacy')||'0');
+function newChar(){return{name:'',dao:'',sex:'男',customSex:'',age:24,look:'',
+ origin:-1,path:-1,root:-1,eles:[],con:6,talents:[],alloc:[6,6,6,6,6,6],_step:1};}
+function rd(){return G.c;}
+
+/* ===================== 建号 ===================== */
+function buildPlayer(){
+ const p=C,lg=Math.min(LEGACY(),3);
+ const P={name:p.name||'',sex:p.sex==='自'?(p.customSex||'不可名状'):p.sex,
+  age:p.age,att:p.alloc.slice(),look:p.look,path:PATHS[p.path],
+  origin:p.origin>=0?ORIGINS[p.origin].n:'无',rootType:ROOTS[p.root].n,rootC:ROOTS[p.root].c,
+  eles:p.eles.slice(),con:CONS[p.con].n,rIdx:0,stg:0,cult:0,hp:100,mp:100,
+  hpM:100,mpM:100,stones:100+lg*80,rep:0,karma:0,merit:0,
+  y:387,m:1,startAge:p.age,bag:[{n:'聚气丹',k:2},{n:'回春丹',k:1}],
+  gongfa:{n:'聚气诀',g:'黄'},herbs:[],wu:0,wuT:[0,0,0,0,0],awaken:[],rel:{},dao:null,
+  sect:null,rank:0,contrib:0,region:0,cave:{lv:0,jingShi:false,zhen:false},
+  abn:[],kills:0,charmBonus:1,herbLuck:0,view:'main'};
+ if(p.con==='九阳圣体')P.hpM+=40;
+ if(p.origin>=0)ORIGINS[p.origin].f(P);
+ P.att=P.att.map(v=>CL(v,1,20));
+ P.att[5]=CL(P.att[5]+lg,1,20);
+ if(p.root===4&&!p.eles.length)p.eles=[Object.keys(VAR)[RI(3)]];
+ for(const t of p.talents){const td=TALENTS.find(x=>x.n===t);if(td)td.f(P);}
+ P.hpM=Math.max(60,P.hpM);P.mpM=Math.max(80,P.mpM);P.hp=P.hpM;P.mp=P.mpM;
+ const s=p.look||'';
+ P.zi=/倾国|倾城|仙/.test(s)?'超凡':(/帅|俊|美|丽|清|妍|皎/.test(s)?(/绝世/.test(s)?'超凡':'出众'):['凡姿','清秀','清秀','出众'][RI(4)]);
+ if(!P.name)P.name=['陈默','洛云舟','苏挽星'][RI(3)];
+ P.dao=('青芜清微玄裳听雪抱朴').match(/.{2}/g)[RI(4)];
+ return P;
+}
+
+/* ===================== 数值公式 ===================== */
+function mindCoef(p){const req=4+p.rIdx*2;return p.att[4]>=req+4?1.2:(p.att[4]>=req?1.0:0.55);}
+function qiCoef(p){return [1,1.35,1.6,1.9][p.cave.lv];}
+function cultGain(p,closed){
+ let v=RL[p.rIdx].base*(1+p.att[0]*0.05)*p.rootC*p.rootC*GF[p.gongfa.g].c*qiCoef(p)*mindCoef(p);
+ if(p.con==='先天道体')v*=1.5;
+ if(p.awaken.some(a=>a.startsWith('聚灵')))v*=1.15;
+ if(closed)v*=2*(p.cave.jingShi?1.1:1);
+ if(p.abn.includes('心魔缠身'))v*=0.5;
+ if(p.abn.includes('内伤'))v*=0.5;
+ return v;}
+function needOf(p){return RL[p.rIdx].need;}
+function addCult(p,v){if(p)p.cult=CL(p.cult+v,0,9999);}
+function heal(p,k,v){const mul=danMul(p);if(k==='hp')p.hp=CL(p.hp+v*mul,0,p.hpM);else p.mp=CL(p.mp+v*mul,0,p.mpM);}
+function danMul(p){return 1+p.wuT[1]*0.15+(p.awaken.some(a=>a.startsWith('丹药'))?0.3:0);}
+function power(p){return [26,54,96,168,290,470,760,1200,1900,3100][p.rIdx]*(0.92+p.stg*0.09)*(1+p.wuT[0]*0.06)*(p.awaken.some(a=>a.startsWith('剑心'))?1.2:1);}
+function guardVal(p){return p.rIdx*8+p.stg*3;}
+
+/* ===================== 渲染 ===================== */
+function render(){
+ const a=$('#app');
+ if(!G){a.innerHTML=titleHTML();return;}
+ const p=G.c;
+ let html='<h1 class="title">问道长生</h1><div class="sub">天玄历 '+p.y+' 年 · '+MN[p.m-1]+'月 · 作者：雾见川</div>';
+ html+='<div class="flexwrap"><div class="col-l">'+centerHTML()+'</div><div class="col-r"><div class="steer">'+statusHTML()+cmdHTML()+'</div></div></div>';
+ a.innerHTML=html;
+ const lg=$('#logBox');if(lg)lg.scrollTop=lg.scrollHeight;
+ save();
+}
+function titleHTML(){
+ const has=!!sGet('wdcs_save'),l=LEGACY();
+ return '<h1 class="title">问道长生</h1><div class="sub">修仙文字游戏 · 网页版 · 作者：雾见川'+(l?' · 轮回次数 '+l:'')+'</div>'+
+ panel('jade','卷首',
+  '<div class="center" style="line-height:2">九州之大，众生如蚁。<br>有人求长生，有人求快意，有人只求护住一人。<br>灵气潮汐将至，秘境将启，域外天魔窥伺——<br><span class="big">你的道，从一粒微尘开始。</span></div>')+
+ panel('gold','入局',
+  '<div class="row" style="justify-content:center">'+
+  '<button class="btn" data-a="newgame">'+tag('新　局','jade')+' 踏上仙途</button>'+
+  (has?'<button class="btn" data-a="load">'+tag('续　缘','gold')+' 读取进度</button>':'')+
+  '</div><div class="footer-cmd">进度自动存于本机 · 关掉页面不丢</div>');
+}
+
+/* ---------- 创角 ---------- */
+function renderCreate(step){
+ C._step=step;
+ $('#app').innerHTML='<h1 class="title">问道长生</h1><div class="sub">天玄历387年 · 春 · 作者：雾见川</div>'+createHTML(step);
+ const bind=(sel,key)=>{const el=$(sel);el&&el.addEventListener('input',()=>{C[key]=el.value;});};
+ bind('#cn','name');bind('#clk','look');bind('#cs','customSex');
+ const ag=$('#agr');if(ag){ag.addEventListener('input',()=>{C.age=+ag.value;const s=$('#agv');if(s)s.textContent=ag.value;});}
+}
+function createHTML(step){
+ const p=C;
+ if(step===1){
+  let orig='',pth='';
+  for(let i=0;i<ORIGINS.length;i++)orig+='<div class="opt '+(p.origin===i?'sel':'')+'" data-a="po" data-v="'+i+'">'+tag(String.fromCharCode(65+i),'blue')+' <b>'+ORIGINS[i].n+'</b> <small>'+ORIGINS[i].d+'</small></div>';
+  const pd=['寻飞升之路','护所爱渡千年','旧怨必偿亦被怨缠','某人命悬一线','自外门爬至一霸','机缘随心'];
+  for(let i=0;i<PATHS.length;i++)pth+='<div class="opt '+(p.path===i?'sel':'')+'" data-a="pp" data-v="'+i+'">'+tag(PATHS[i],'vio')+' <small>'+pd[i]+'</small></div>';
+  return panel('jade','创角 · 第一面 <span style="font-size:12px;font-weight:normal">作者：雾见川</span>',
+   '<div class="row"><div style="flex:1;min-width:180px">姓名<br><input type="text" id="cn" maxlength="8" value="'+esc(C.name)+'" placeholder="留空则随机"></div>'+
+   '<div style="flex:1;min-width:150px">性别<br><div class="row">'+
+   ['男','女','自'].map(s=>'<label class="opt '+(C.sex===s?'sel':'')+'" style="padding:3px 12px" data-a="sex" data-v="'+s+'">'+(s==='自'?'自定义':s)+'</label>').join('')+'</div></div></div>'+
+   (C.sex==='自'?'<div style="margin-top:6px"><input type="text" id="cs" maxlength="10" placeholder="如：不辨雌雄的妖 / 只论道号不论男女" value="'+esc(C.customSex)+'"></div>':'')+
+   '<div style="margin-top:8px">年龄：<b id="agv">'+C.age+'</b> 岁 <small style="color:var(--sub)">（越年轻寿元越足）</small><br><input type="range" id="agr" min="16" max="60" value="'+C.age+'"></div>'+
+   '<div style="margin-top:6px">相貌描述<small style="color:var(--sub)">（决定仙姿；含「美俊清」等字者更佳）</small><br><input type="text" id="clk" maxlength="30" placeholder="例如：眉目清朗，一身布衣" value="'+esc(C.look)+'"></div>'+
+   '<div class="hr"></div><div class="big">出身 <span style="color:var(--sub);font-size:12px">十选一</span></div>'+orig+
+   '<div class="big" style="margin-top:8px">道途 <span style="color:var(--sub);font-size:12px">六选一 · 定结局倾向</span></div>'+pth+
+   '<div class="hr"></div><div class="row" style="justify-content:center"><button class="btn" data-a="crnext1" '+(C.origin<0||C.path<0?'disabled':'')+'>'+tag('下一面','jade')+' 灵根 · 体质 · 六维</button></div>');
+ }
+ let roots='',cons='',tals='';
+ for(let i=0;i<ROOTS.length;i++)roots+='<div class="opt '+(C.root===i?'sel':'')+'" data-a="pr" data-v="'+i+'">'+tag(ROOTS[i].n,'vio')+' <small>'+ROOTS[i].d+'</small></div>';
+ for(let i=0;i<CONS.length;i++)cons+='<div class="opt '+(C.con===i?'sel':'')+'" data-a="pc" data-v="'+i+'">'+tag(CONS[i].n,'bam')+' <small>'+CONS[i].d+'</small></div>';
+ let spent=0;for(const t of C.talents){const td=TALENTS.find(x=>x.n===t);spent+=td?td.c:0;}
+ for(let i=0;i<TALENTS.length;i++){const t=TALENTS[i];const on=C.talents.includes(t.n);
+  tals+='<div class="opt '+(on?'sel':'')+'" data-a="pt" data-v="'+t.n+'">'+tag(t.n,(t.c<0?'gray':'bam'))+' <small>'+t.d+' · 耗'+t.c+'点</small></div>';}
+ let eleRow='';
+ if(C.root>=0&&C.root<=3){
+  let h='<div class="row">';
+  for(const k in EL)h+='<label class="opt" style="padding:3px 10px;'+(C.eles.includes(k)?'border-color:'+EL[k]+';background:#fdf1ee':'')+'" data-a="pe" data-v="'+k+'"><span class="echip" style="background:'+EL[k]+'">'+k+'</span></label>';
+  h+='</div><div style="font-size:12px;color:var(--sub)">此灵根限选 '+(C.root===3?5:C.root+1)+' 系 · 已选 '+C.eles.length+'</div>';
+  eleRow=h;
+ }else if(C.root===4)eleRow='<div style="font-size:13px">变异之属自行降临：'+tag('？','purp')+' <small>开局面定（雷/风/冰）</small></div>';
+ let alloc='',used=C.alloc.reduce((a,b)=>a+b,0),left=60-used;
+ for(let i=0;i<6;i++)alloc+='<div class="row" style="justify-content:space-between;margin:3px 0"><span>'+ATTN[i]+' <b style="color:var(--vio)">'+C.alloc[i]+'</b>/15</span><span><button class="step" data-a="decA" data-v="'+i+'">−</button> <button class="step" data-a="incA" data-v="'+i+'">＋</button></span></div>';
+ return panel('jade','创角 · 第二面',
+  '<div class="big">灵根</div>'+roots+(eleRow?'<div style="margin:4px 0 8px">'+eleRow+'</div>':'')+
+  '<div class="big">体质</div>'+cons+
+  '<div class="big" style="margin-top:6px">天赋池 <span class="'+(spent>5?'danger':'')+'">已用 '+spent+'/5 点</span></div>'+tals+
+  '<div class="hr"></div><div class="big">六维分配 <span class="'+(left<0?'danger':'')+'">余 '+left+' 点（必须分完）</span></div>'+alloc+
+  '<div class="hr"></div><div class="row" style="justify-content:center">'+
+  '<button class="btn" data-a="crback">'+tag('返回','gray')+'上一面</button>'+
+  '<button class="btn" data-a="crdone" '+(ready2(spent,left)?'':'disabled')+'>'+tag('就此入道','jade')+' 观其命运</button></div>'+
+  '<div class="footer-cmd">单项上限15 · 出身修正后最高20</div>');
+}
+function ready2(spent,left){return spent<=5&&left===0&&(C.root!==0||C.eles.length===1)&&(C.root!==1||C.eles.length===2)&&(C.root!==2||C.eles.length===3);}
+
+/* ---------- 状态卡 ---------- */
+function statusHTML(){
+ const p=G.c,R0=RL[p.rIdx],rem=R0.life-p.age;
+ const eles=p.eles.map(e=>'<span class="echip" style="background:'+(VAR[e]||EL[e])+'">'+e+'</span>').join('');
+ const abn=p.abn.join('·');
+ const topRel=Object.entries(p.rel).sort((a,b)=>b[1]-a[1])[0];
+ const relLine=(topRel&&topRel[1]>0)?'<div style="font-size:13px">情缘 '+npcName(topRel[0])+' '+pb(topRel[1],100,'#D88FA5')+' <span style="color:#D88FA5">'+topRel[1]+'</span></div>':'';
+ return panel('jade','状态卡',
+ '<div class="statgrid">'+
+ '<div><b>'+esc(p.dao)+'</b>（'+esc(p.name)+'）· '+p.sex+' · '+p.age+' 岁</div>'+
+ '<div>寿元 '+pb(Math.max(rem,0),R0.life,rem<=5?'#C05F55':'#5C8C6E')+' <span style="color:'+(rem<=5?'#C05F55':'#5C8C6E')+'">'+rem+' 年</span></div>'+
+ '<div>境界 <b>'+RL[p.rIdx].n+' · '+STG[p.stg]+'</b>'+(p.dao?' · 道侣 '+npcName(p.dao):'')+'</div>'+
+ '<div>'+(p.sect?p.sect+' · '+['','外门','内门','真传'][p.rank]:'散修（无宗门）')+'</div>'+
+ '<div>灵石 <b style="color:#A87E2E">'+p.stones+'</b> · 功德 <span style="color:#6BA38E">'+p.merit+'</span> · 业力 <span style="color:#8E8578">'+p.karma+'</span> · 声望 '+p.rep+'</div>'+
+ '<div>'+ATTN.map((n,i)=>n+' '+p.att[i]).join(' · ')+'</div>'+
+ '<div>仙姿 '+p.zi+' · 灵根 '+p.rootType.replace('灵根','')+' '+eles+'</div>'+
+ '<div>功法《'+p.gongfa.n+'》（'+p.gongfa.g+'阶）· 所在 '+REGIONS[p.region].n.split(' · ')[1]+'</div>'+
+ '</div>'+
+ '<div style="margin-top:5px;font-size:13px">气血 '+pb(p.hp,p.hpM,'#C05F55')+' '+Math.ceil(p.hp)+'/'+p.hpM+'　灵力 '+pb(p.mp,p.mpM,'#5E8FAE')+' '+Math.ceil(p.mp)+'/'+p.mpM+'　修为 '+pb(p.cult,needOf(p),'#A87E2E')+' '+Math.floor(p.cult)+'/'+needOf(p)+'</div>'+
+ (abn?'<div class="danger" style="font-size:13px">异常：'+abn+'</div>':'')+
+ relLine+
+ '<div style="font-size:12px;color:var(--sub);margin-top:4px">时节 '+season()+' · 月修为约 '+cultGain(p,false).toFixed(1)+' · 主线：'+questHint()+'</div>');
+}
+function season(){return ['春','夏','秋','冬'][Math.floor((rd().m-1)/3)];}
+function npcName(id){const n=NPCS.find(x=>x.id===id);return n?n.n:'故人';}
+function questHint(){const p=rd();
+ if(p.rIdx===0)return p.sect?('宗门贡献 '+p.contrib+'，攒够可晋升'):'宜拜入青云宗立足';
+ return ({问道飞升:'参悟功法，寻上古遗蜕',逍遥长生:'经营洞府，护住所爱',快意恩仇:'旧怨未了，江湖夜雨',
+  守护所爱:'意中人尚在人间，趁早相伴',问鼎天下:'往上爬，哪怕踏着尸山',随心所欲:'潮汐将至，各自漂流'})[p.path];}
+function cmdHTML(){
+ /* 注意：此处特意不用 <form> —— 本地 file:// 下表单提交会触发同源安全报错 */
+ return '<div class="panel" style="border-color:#ddd6c8;padding:8px"><div class="row" style="gap:4px;justify-content:center">'+
+ '<button class="btn" data-a="vmain">主页</button><button class="btn" data-a="vmap">地图</button>'+
+ '<button class="btn" data-a="vmkt">坊市</button><button class="btn" data-a="vbag">背包</button>'+
+ '<button class="btn" data-a="vsect">宗门</button><button class="btn" data-a="vcave">洞府</button>'+
+ '<button class="btn" data-a="vsoc">情缘</button><button class="btn" data-a="vwu">悟道</button>'+
+ '<button class="btn" data-a="vhelp">帮助</button></div>'+
+ '<div class="row" style="margin-top:6px"><input id="fcmd" type="text" placeholder="自由行动：夜探藏经阁 / 给云栖送礼 / 闭关十年…" autocomplete="off"><button class="btn" data-a="fcgo">行</button></div>'+
+ '<div class="footer-cmd"><span style="cursor:pointer" data-a="doSave">存档</span> · <span style="cursor:pointer" data-a="restart">放弃今生重开</span></div></div>';
+}
+
+/* ---------- 各视图 ---------- */
+function logBox(){return '<div class="panel t-bam"><span class="bar-title">见闻录</span><div class="log" id="logBox">'+G.log.map(l=>'<p>'+l+'</p>').join('')+'</div></div>';}
+function btn(a,label,c,labelTxt,dis,v){return '<button class="btn" data-a="'+a+'"'+(v!==undefined?' data-v="'+v+'"':'')+(dis?' disabled':'')+'>'+(labelTxt?tag(labelTxt,c):'')+label+'</button>';}
+function centerHTML(){
+ const p=G.c;
+ if(G.cb)return combatHTML();
+ if(G.pick)return pickHTML();
+ let body='';
+ if(p.view==='main'){
+  const n=needOf(p);
+  let bt='';
+  if(p.cult>=n&&p.stg<3)bt='<div style="margin-top:6px">'+btn('btS','尝试小突破（'+STG[p.stg]+' → '+STG[p.stg+1]+'）','purp','','')+'</div>';
+  if(p.cult>=n&&p.stg===3)bt='<div style="margin-top:6px"><b class="danger">大境界壁垒已至，择路：</b><div class="row" style="margin-top:4px">'+
+   btn('btBH','人道（破境丹 '+RDprice()+' 石）','gold','','','H')+
+   btn('btBD','地道（天材地宝×2，持 '+cntBag('天材地宝')+'）','bam','','','D')+
+   btn('btBT','天道（宝物+灵珠+雷劫，最险最高）','purp','','','T')+'</div></div>';
+  body=logBox()+'<div class="panel"><span class="bar-title">静室 · 日常</span><div class="hr"></div><div class="row">'+
+  btn('cult','打坐修炼（1月）','jade','','')+
+  btn('closed','闭关……','bam','','')+
+  btn('explore','外出历练（1月）','vio','','')+
+  btn('rest','静养调息（1月）','bam','','')+
+  '</div>'+bt+'<div class="footer-cmd">每行动一次，便是流走一月光阴。</div></div>';
+ }
+ else if(p.view==='map'){
+  let rows=REGIONS.map((r,i)=>{
+   const here=i===p.region,myR=p.rIdx+1;
+   let w=myR<r.rec-1?'<span class="danger">〔警示〕越境而行恐有杀身之祸</span>':
+        myR<r.rec?'<span style="color:#9a7420">〔慎行〕遇敌吃亏是常态</span>':'';
+   return '<div class="opt" style="cursor:default"><b>'+r.n+'</b>'+(here?' '+tag('此处','jade'):'')+'<br><small>'+r.d+' · 推荐 '+REGNAME[r.rec]+'</small><br>'+w+
+    (here?'':' <div style="margin-top:4px">'+btn('travel','迁往（耗一月）','blue','','',i)+'</div>')+'</div>';
+  }).join('');
+  body=panel('blue','九州舆图',rows);
+ }
+ else if(p.view==='bag'){
+  let rows='';
+  if(!p.bag.length&&!p.herbs.length)rows='<div class="center" style="color:var(--sub)">乾坤袋空空如也</div>';
+  p.bag.forEach((it,i)=>{
+   const m=MK.find(x=>x.n===it.n)||{};
+   rows+='<div class="row" style="justify-content:space-between"><span>'+it.n+' ×'+it.k+' <small>'+(m.d||'')+'</small></span><span>'+
+   (m.ty==='pill'?btn('useIt','服用','jade','','',i):'')+'</span></div>';});
+  p.herbs.forEach((h,i)=>{rows+='<div class="row" style="justify-content:space-between"><span>'+h.n+' <small>市价约'+h.v+'石</small></span>'+btn('sellH','出售','gold','','',i)+'</span></div>';});
+  body=panel('gold','乾坤袋',rows);
+ }
+ else if(p.view==='mkt'){
+  let rows=MK.filter(m=>!m.req||p.rIdx>=m.req).map(m=>
+   '<div class="row" style="justify-content:space-between"><span><b>'+m.n+'</b> <small>'+m.d+'</small></span><span>'+m.p+' 石 '+btn('buy','购入','gold','','',m.n)+'</span></div>').join('');
+  body=panel('gold','天机坊市','<div style="font-size:13px;color:var(--sub)">掌柜云栖笑吟吟：「道友里边请。」 当前灵石 <b style="color:#A87E2E">'+p.stones+'</b></div><div class="hr"></div>'+rows);
+ }
+ else if(p.view==='sect'){
+  if(!p.sect){
+   body=panel('blue','青云宗 · 山门',
+    '守门弟子拦住去路：「欲入我青云宗，先过资质一关。」<div class="hr"></div>'+
+    '<div>试炼标准：资质+悟性 ≥ 15（你当前 '+(p.att[0]+p.att[1])+'，亦有三分运气可搏）</div>'+
+    '<div class="row" style="margin-top:6px">'+btn('joinSect','上前应试','blue','','')+'</div>');
+  }else{
+   const jobs=[{n:'巡逻',pay:30,risk:0},{n:'采药',pay:20,risk:1,herb:1},{n:'猎妖',pay:70,risk:2},{n:'护送',pay:90,risk:2}];
+   let rows=jobs.map((j,i)=>'<div class="row" style="justify-content:space-between"><span>'+j.n+' <small>酬 '+j.pay+' 石'+(j.risk?' · 有风险':'')+'</small></span>'+btn('job','接取','blue','','',i)+'</div>').join('');
+   body=panel('blue',p.sect+' · '+['','外门','内门','真传'][p.rank]+'弟子',
+    '<div>贡献 '+p.contrib+' <small>（'+(p.rank===1?'120 晋内门':p.rank===2?'300 晋真传':'已是真传')+'）</small> · 年俸 '+(p.rank*40+40)+' 石</div>'+
+    '<div class="hr"></div>'+rows+
+    '<div class="hr"></div>'+btn('leaveSect','叛出师门（声望大跌 · 或遭追杀）','red','决裂'));
+  }
+ }
+ else if(p.view==='cave'){
+  const c=p.cave,lvN=['石屋 · 普通(×1.0)','辟谷静居 · 浓郁(×1.35)','灵眼洞窟 · 稀郁(×1.6)','风水福地 · 汇川(×1.9)'][c.lv];
+  const lvCost=[400,1800,6000][c.lv]||0,lvReq=[0,1,3,99][c.lv];
+  body=panel('jade','洞府 · '+REGIONS[p.region].n.split(' · ')[1],
+   '<div>当前格局：'+lvN+'</div><div>设施：静室 '+(c.jingShi?'已设（闭关+10%）':'未设')+' · 护山禁制 '+(c.zhen?'已布':'未布')+'</div>'+
+   '<div class="hr"></div><div class="row">'+
+   btn('upCave',c.lv>=3?'格局圆满':'升格格局（'+lvCost+'石'+(lvReq?' · 需'+RL[lvReq].n:'')+'）','jade','',c.lv>=3||p.stones<lvCost||p.rIdx<lvReq)+
+   btn('setRoom',c.jingShi?'静室已设':'设静室（300石）','bam','',c.jingShi||p.stones<300)+
+   btn('setZhen',c.zhen?'禁制已布':'布禁制（200石）','bam','',c.zhen||p.stones<200)+'</div>');
+ }
+ else if(p.view==='soc'){
+  let rows=NPCS.map(n=>{
+   const af=p.rel[n.id]||0,here=n.loc===p.region;
+   const lab=af>=80?'生死相许之交':af>=60?'心意暗通':af>=40?'知己':af>=20?'相识':'陌生';
+   let ops=here?('<span class="row">'+btn('talk','叙话','pink','','',n.id)+' '+
+    btn('gift','赠礼(30石)','pink','','',n.id)+' '+
+    btn('lunDao','论道','bam','','',n.id)+
+    (af>=60?btn('dual','双修互益','pink','情缘','',n.id):'')+
+    (af>=80&&!p.dao?btn('marry','结为道侣','pink','誓约','',n.id):'')+'</span>')
+    :'<span style="color:var(--sub);font-size:12px">身在 '+REGIONS[n.loc].n.split(' · ')[1]+'</span>';
+   return '<div class="opt" style="cursor:default"><b>'+n.n+'</b> '+tag(n.sx==='男'?'君':'卿','pink')+' <small>'+n.d+' · '+lab+'</small><br>'+
+   pb(af,100,'#D88FA5')+' <span style="color:#D88FA5">'+af+'</span><div class="row" style="margin-top:4px">'+ops+'</div></div>';
+  }).join('');
+  body=panel('pink','情缘簿 · 不拘身份性别',rows+'<div class="footer-cmd">陌生 → 相识 → 知己 → 心意暗通 → 相许</div>');
+ }
+ else if(p.view==='wu'){
+  let tr=WU_TREES.map((t,i)=>'<div class="row" style="justify-content:space-between"><span><b>'+t.n+'</b> Lv.'+p.wuT[i]+' <small>'+t.d+'</small></span>'+btn('learnWu','点亮(1点)','bam','','',i)+'</div>').join('');
+  body=panel('bam','悟道树','<div>悟道点 <b style="color:#6a9c72">'+p.wu+'</b> <small>（论道·闭关经年·破境可得）</small></div><div class="hr"></div>'+tr);
+ }
+ else{
+  body=panel('jade','帮助','<div style="line-height:1.9;font-size:13.5px">'+
+  '<b>岁月</b>：每行动一次流逝一月；十境修行，修为满则谋突破。<br>'+
+  '<b>突破</b>：小突破看道心；大突破分人道（稳）/地道（宝物）/天道（最险最高，须渡紫霄雷劫）。功德挡雷，业力招狠的。<br>'+
+  '<b>战斗</b>：境界高你一档近乎碾压——打不过就跑不算丢人。<br>'+
+  '<b>自由</b>：输入框写什么都会被演绎（探宝、送礼、恶行……各有后果）。'+
+  '</div>');
+ }
+ return body;
+}
+function RDprice(){return (400*(rd().rIdx+1))|0;}
+function cntBag(n){const it=rd().bag.find(b=>b.n===n);return it?it.k:0;}
+function pickHTML(){
+ const k=G.pick;
+ const opts=k.list.map((n,i)=>'<div class="opt" data-a="pkAw" data-v="'+i+'">'+tag('悟','vio')+' '+n+'</div>').join('');
+ return panel('vio','逆天改命 · 三选其一',opts);
+}
+
+/* ===================== 战斗 ===================== */
+function mkEnemy(base,scale,boss){
+ const nm=boss?('凶名赫赫的'+['血煞门客','妖狼头领','蚀骨老鬼','截道修士'][RI(4)]):
+  ['游方的血魔宗徒','山中妖兽','邪修散人','护宝傀儡','抢道的野修'][RI(5)];
+ const np=[26,54,96,168,290,470,760,1200,1900,3100];
+ const rr=CL(base+RI(3)-1,0,9);
+ const pw=np[rr]*(0.9+RI(2)*0.1)*scale*(1+REGIONS[G.c.region].e*0.06);
+ return{n:nm,r:rr,stg:RI(4),hp:pw*6,hpM:pw*6,pw:pw};
+}
+function oppAssess(e){const d=e.r-G.c.rIdx;
+ if(d>=2)return '对方威压如渊——正面交手近乎必死。';
+ if(d===1)return '对方高你一大境界，硬拼胜算极低。';
+ if(d===0)return '同阶相搏，胜负未可知。';
+ return '对方弱于你——但穷寇莫追，小心鱼死网破。';}
+function combatHTML(){
+ const c=G.cb,p=G.c;
+ let acts='<div class="row">'+
+ btn('cbA','攻击','red','','')+btn('cbQ','蓄势(两回合放绝技)','vio','','')+btn('cbD','防御(减半)','blue','','')+
+ btn('cbR','遁走(看遁速)','bam','','')+btn('cbT','言语周旋','gray','','')+btn('cbS','认输献宝','gray','','')+'</div>';
+ const usable=[];p.bag.forEach((b,i)=>{const m=MK.find(x=>x.n===b.n);if(m&&(m.ty==='pill'||m.ty==='fu'))usable.push(i);});
+ if(usable.length){acts+='<div class="hr"></div><div class="row">'+usable.map(i=>'<span>'+btn('cbU',p.bag[i].n+' ×'+p.bag[i].k,'gold','','',i)+'</span>').join(' ')+'</div>';}
+ return panel('red','遭遇战 · 回合 '+(c.turn+1),
+ '<div class="statgrid"><div><b class="danger">'+esc(c.e.n)+'</b><br>'+RL[c.e.r].n+' · '+STG[c.e.stg]+'<br>气血 '+pb(Math.max(c.e.hp,0),c.e.hpM,'#C05F55')+' '+Math.ceil(Math.max(c.e.hp,0))+'</div>'+
+ '<div>'+esc(p.dao)+'<br>气血 '+pb(p.hp,p.hpM,'#C05F55')+' '+Math.ceil(p.hp)+'/'+p.hpM+'<br>灵力 '+pb(p.mp,p.mpM,'#5E8FAE')+' '+Math.ceil(p.mp)+'/'+p.mpM+
+ (c.charge?'<br><span style="color:#7a5fa8">蓄势 '+c.charge+'/2</span>':'')+(c.guard?'<br><span style="color:#7FA8C9">防御姿态</span>':'')+'</div></div>'+
+ '<div class="hr"></div>'+c.log.slice(-5).map(l=>'<p style="font-size:13.5px">'+l+'</p>').join('')+
+ '<div class="danger" style="font-size:12.5px;margin-top:4px">'+oppAssess(c.e)+'</div>'+
+ '<div class="hr"></div>'+acts,'1');
+}
+function startCombat(e){
+ G.cb={e:e,charge:0,guard:false,shield:false,calm:false,turn:0,log:['【遭遇】'+e.n+' 挡路！（'+RL[e.r].n+' '+STG[e.stg]+'）']};
+ render();
+}
+function cbl(s){G.cb.log.push(s);}
+function hostileKill(name){return /血魔|邪修|妖兽|傀儡|野修|头领|老鬼|门客|截道/.test(name);}
+function enemyStrike(){
+ const c=G.cb,p=G.c,e=c.e;
+ let ed=e.pw*0.30*(0.85+Math.random()*0.3)-guardVal(p)*1.2;
+ if(c.calm){ed*=0.7;c.calm=false;}
+ if(c.guard)ed*=0.5;
+ if(c.shield){ed*=0.25;c.shield=false;}
+ c.guard=false;
+ ed=Math.max(1,Math.floor(ed));
+ p.hp-=ed;
+ cbl('<span style="color:#B23F33">'+e.n+' 还以颜色，你受创 '+ed+'。</span>');
+ return p.hp<=0;
+}
+function cbFight(opt){
+ const c=G.cb,p=G.c,e=c.e;if(!c)return;
+ const sup=e.r-p.rIdx>=2?0.08:e.r-p.rIdx===1?0.4:1;
+ const esup=p.rIdx-e.r>=1?0.55:1;
+ if(opt==='atk'){
+  const big=c.charge>=2;c.charge=0;
+  let d=power(p)*0.32*(big?2.3:1)*(0.85+Math.random()*0.3)*sup-(2+e.r*3);
+  d=Math.max(1,Math.floor(d));
+  if(big)cbl('<span style="color:#8B6FA8">【绝技】光影暴涨！对 '+e.n+' 造成 <b>'+d+'</b> 重创！'+(sup<1?'——奈何境界鸿沟深似海。':'')+'</span>');
+  else cbl('<span style="color:#C4675C">交锋一合，造成 '+d+' 伤害。</span>');
+  e.hp-=d;
+ }else if(opt==='chg'){c.charge++;cbl('<span style="color:#7a5fa8">锋芒尽敛，气机内蕴。（蓄势 '+c.charge+'/2）</span>');}
+ else if(opt==='def'){c.guard=true;cbl('<span style="color:#7FA8C9">凝神守御，减伤一半。</span>');}
+ else if(opt==='flee'){
+  const ch=CL(30+p.att[3]*3+p.wuT[3]*8-(e.r-p.rIdx)*15+(e.hp<e.hpM*0.3?15:0),5,92);
+  if(D100()<=ch){G.cb=null;say('<b class="lg-g">足下遁光乍起——走脱了！</b>','g');afterAction();return;}
+  cbl('<span style="color:#C05F55">遁法被一眼看破，衣角被罡风削去一片！</span>');
+ }
+ else if(opt==='talk'){
+  if(D100()<(40+p.att[4]*2)){c.calm=true;cbl('<span style="color:#8C8578">「且慢。」你朗声道出一番道理，对方攻势一滞。</span>');}
+  else cbl('<span style="color:#8C8578">言辞无用，杀气不减。</span>');
+ }
+ if(e.hp<=0){winCombat();return;}
+ if(enemyStrike()){cbl('<span class="lg-r">眼前发黑，意识坠入深渊……</span>');endCombatLost();return;}
+ c.turn++;render();
+}
+function winCombat(){
+ const c=G.cb,p=G.c,e=c.e;G.cb=null;
+ p.kills++;
+ addCult(p,needOf(p)*0.10);
+ if(hostileKill(e.n)){p.karma+=2;say('<b class="lg-g">尘埃落定，「'+e.n+'」伏诛。</b>因果簿上又添一笔（业力+2）。','g');}
+ else say('<b class="lg-g">尘埃落定，「'+e.n+'」倒在了你的面前。</b>神魂震荡，修为精进。','g');
+ moneyGet(p,Math.floor((20+REGIONS[p.region].e*35)*(1+p.rIdx*0.8)*(0.7+Math.random()*0.6)));
+ if(D100()<28){const h=pickHerb(REGIONS[p.region].e);addHerb(h);say('从其储物袋翻出【'+h.n+'】。','g');}
+ if(D100()<12){const f=['玄龟符','火鳞符'][RI(2)];addItem(f,1);say('意外收获：【'+f+'】一张。','g');}
+ if(D100()<5+REGIONS[p.region].e*4){addItem('天材地宝',1);say('<b style="color:#9a7420">竟还压着一枚【天材地宝】——机缘有时就躺在死人身上。</b>','y');}
+ if(p.path==='快意恩仇'&&D100()<10)say('恍惚间，你觉得那个纠缠多年的影子又近了一步……','p');
+ afterAction();
+}
+function endCombatLost(){
+ const c=G.cb,p=G.c,e=c.e;G.cb=null;
+ const gap=e.r-p.rIdx;
+ if(D100()<=(gap>=2?60:gap===1?30:12)){
+  say('那最后一击穿透了护体灵光。<b class="lg-r">天地复归寂静——你的名字被风带走。</b>');die('殒命');return;
+ }
+ const lost=Math.floor(p.stones*0.5);p.stones-=lost;p.hp=Math.max(1,p.hpM*0.15);
+ if(!p.abn.includes('重伤'))p.abn.push('重伤');
+ say('不知过了多久，你在荒野醒来——储物袋瘪了大半（-'+lost+'石），遍体鳞伤。<b>留得一命，已是万幸。</b>','r');
+ if(D100()<30)say('那厮撂下狠话：「再让我看见你，要你的性命。」','r');
+ afterAction();
+}
+function cbSurrender(){
+ const c=G.cb,p=G.c,e=c.e;G.cb=null;
+ const lost=Math.floor(p.stones*0.7);p.stones-=lost;
+ say('你掷剑于地，抱拳认输。「'+e.n+'」冷笑着卷走七成家当（-'+lost+'石），扬长而去。<span class="lg-s">低头不是耻辱，是给来日留一口气。</span>','y');
+ afterAction();
+}
+function cbUse(idx){
+ const c=G.cb,p=G.c,it=p.bag[idx];if(!c||!it)return;
+ const m=MK.find(x=>x.n===it.n);removeItem(it.n,1);
+ if(m.ty==='pill'){m.fx(p);cbl('<span style="color:#6a9c72">服下【'+it.n+'】，气息稳了几分。</span>');}
+ else if(it.n==='火鳞符'){const d=Math.max(1,Math.floor(power(p)*0.5*(0.9+Math.random()*0.3)));c.e.hp-=d;cbl('<span style="color:#C05F55">朱砂火符炸开！'+d+'伤害。</span>');}
+ else if(it.n==='玄龟符'){c.shield=true;cbl('<span style="color:#7FA8C9">龟甲虚影笼罩周身，下次受击大减。</span>');}
+ else if(it.n==='遁地符'){G.cb=null;say('<span class="lg-g">土遁符裂开，你顺着一道黄光溜了。</span>','g');afterAction();return;}
+ if(c.e.hp<=0){winCombat();return;}
+ if(enemyStrike()){cbl('<span class="lg-r">视野染红……</span>');endCombatLost();return;}
+ render();
+}
+
+/* ===================== 渡劫 ===================== */
+function triRender(){
+ const t=G.tb;
+ let body='<div>雷霆悬顶，紫电盘旋待落。剩余雷数：<b>'+t.hitsLeft+'</b>　当前气血：<b class="danger">'+Math.ceil(G.c.hp)+'</b></div><div class="hr"></div><div class="row">'+
+ btn('tbTake','硬抗','purp','','')+btn('tbFu','燃玄龟符格挡','blue','',cntBag('玄龟符')<1)+
+ (rd().merit>=6?btn('tbMerit','以6功德化一道雷','bam','',''):'')+'</div>'+
+ '<div class="footer-cmd">每道雷都实打实扣气血——残血勿浪</div>';
+ $('#app').innerHTML='<h1 class="title">问道长生</h1><div class="sub">渡劫 · 作者：雾见川</div>'+
+ panel('purp','紫霄神雷 · 第 '+(t.round+1)+' 道',body,'1');
+}
+function resolveStrike(mode){
+ const p=G.c,t=G.tb;let dmg=30+p.rIdx*26;
+ if(mode==='fu'){
+  if(cntBag('玄龟符')>0){removeItem('玄龟符',1);dmg=Math.floor(dmg*0.3);}
+ }
+ if(mode==='merit'&&p.merit>=6){p.merit-=6;dmg=0;t.hitsLeft--;say('金光垂落，雷音化作鸣蝉，无声消散。（功德-6）','g');}
+ if(dmg>0){p.hp-=dmg;say('紫雷贯体，痛彻骨髓！气血 -'+dmg+'。','r');}
+ t.round++;
+ if(p.hp<=0){G.tb=null;say('神魂在电光里寸寸碎裂……');die('殒命');return;}
+ t.hitsLeft--;
+ if(t.hitsLeft>0){triRender();save();return;}
+ G.tb=null;finishBig(t.bonus,t.base,t.round);
+}
+function finishBig(path,rate,hits){
+ const p=G.c;
+ let ok=D100()<=rate;if(hits<=1)ok=true;
+ if(ok){
+  p.rIdx++;p.stg=0;p.cult=0;
+  const mul=path==='H'?1.2:path==='D'?1.35:1.55;
+  p.hpM=Math.floor(p.hpM*mul);p.mpM=Math.floor(p.mpM*mul);p.hp=p.hpM;p.mp=p.mpM;
+  if(path!=='H')for(let i=0;i<6;i++)p.att[i]=CL(p.att[i]+(path==='T'?2:1),1,20);
+  say('<b class="lg-g">沧海一声笑——破境功成！而今正是：'+RL[p.rIdx].n+' 初期。寿元上限升至 '+RL[p.rIdx].life+' 载。</b>','g');
+  if(p.abn.includes('心魔缠身')){p.abn.splice(p.abn.indexOf('心魔缠身'),1);say('破境的狂喜涤荡识海，心魔一时蛰伏。','g');}
+  if(p.rIdx===9){afterAction();ascend();return;}
+  afterAction();grantAwaken();return;
+ }
+ if(p.rIdx>=3){
+  p.cult=Math.floor(needOf(p)*0.6);p.stg=2;p.hp=Math.max(5,p.hp-40);
+  if(!p.abn.includes('内伤'))p.abn.push('内伤');
+  say('<b class="lg-r">雷落如瀑，大道之门訇然闭合。</b>修为倒退、经脉受损留下暗伤——代价刻骨铭心。','r');
+ }else{
+  p.cult=Math.floor(needOf(p)*0.6);p.hp=Math.max(5,p.hp-30);
+  say('冲击失败，气海翻腾。道路漫漫，还得从头积蓄。','r');
+ }
+ heartDemonCheck();
+ afterAction();
+}
+function heartDemonCheck(){
+ const p=G.c,chance=CL(20+p.rIdx*8-p.att[4]*1.2,5,60);
+ if(D100()>chance)return;
+ if(p.awaken.some(a=>a.startsWith('心如磐'))){say('心魔叩门，磐石之心岿然不动。','g');return;}
+ p.abn.push('心魔缠身');
+ say('<span class="lg-r">心魔劫至！你最悔的那件事自黑暗里睁开眼睛……修为大减，须静养化解。</span>');
+}
+function grantAwaken(){
+ const pool=AWAKEN.filter(a=>!rd().awaken.some(b=>a.startsWith(b)));
+ if(!pool.length)return;
+ G.pick={list:pool.sort(()=>Math.random()-0.5).slice(0,3)};
+}
+
+/* ===================== 岁月 ===================== */
+function say(t,cls){if(G)G.log.push('<span class="lg-'+(cls||'n')+'">'+t+'</span>');}
+function moneyGet(p,v){p.stones+=v;say('得灵石 <b style="color:#A87E2E">'+v+'</b> 石。','y');}
+function addItem(n,k){const it=rd().bag.find(b=>b.n===n);if(it)it.k+=k;else rd().bag.push({n:n,k:k});}
+function removeItem(n,k){const it=rd().bag.find(b=>b.n===n);if(!it)return false;it.k-=k;if(it.k<=0)rd().bag.splice(rd().bag.indexOf(it),1);return true;}
+function addHerb(h){rd().herbs.push(Object.assign({},h));if(rd().herbLuck)rd().herbs.push(Object.assign({},h));}
+function monthTick(p){
+ p.m++;if(p.m>12){p.m=1;p.y++;p.age++;
+  if(p.sect){const pay=p.rank*40+40;p.stones+=pay;say('年俸发放，+'+pay+' 石。','y');}
+ }
+ p.hp=CL(p.hp+3,0,p.hpM);p.mp=CL(p.mp+4,0,p.mpM);
+ const rem=RL[p.rIdx].life-p.age;
+ if(rem<=0){say('炉火渐熄，你在蒲团上含笑阖眼。');die('坐化');return false;}
+ if(rem===3)say('<span class="lg-r">【岁影】鬓边忽现一根白发——距大限只剩三年。</span>');
+ if(rem===1)say('<span class="lg-r">【岁影】烛火摇曳，你听见岁月在骨头里赶路的声音。</span>');
+ return true;
+}
+function monthAct(){if(!G)return false;return monthTick(G.c);}
+function afterAction(){if(monthAct())checkAuto();else render();}
+function checkAuto(){if(!G)return;const p=G.c,n=needOf(p);
+ if(p.cult>=n&&p.stg<3)say('气机圆满，丹田如满弓——可以尝试<b>突破</b>了。','y');
+ render();
+}
+function finalSummary(){const p=G.c;
+ return '道号'+p.dao+'，终至'+RL[p.rIdx].n+STG[p.stg]+'，享年'+p.age+'岁；斩敌'+p.kills+'，功德'+p.merit+'，业力'+p.karma+'，结识知交'+Object.keys(p.rel).length+'位'+(p.dao?'，与'+npcName(p.dao)+'曾誓约白首':'')+'。';
+}
+function die(why){
+ const p=G.c;DEAD=true;
+ const ep=(why==='坐化'?'<b>坐化。</b>炉火渐熄，蒲团之上含笑阖眼。回首此生：<br>':'<b>殒命。</b>天地复归寂静，名字被风带走。<br>')+finalSummary();
+ sSet('wdcs_legacy',String(LEGACY()+1));
+ sDel('wdcs_save');
+ G=null;
+ $('#app').innerHTML='<h1 class="title">轮回</h1><div class="sub">魂归轮台，前尘作土，唯有一缕道韵不灭</div>'+
+ panel(why==='坐化'?'bam':'red','此生终章','<div style="line-height:1.9">'+ep+'</div>')+
+ panel('vio','宿慧','前世磨砺化为仙缘烙印：<b>转世继承 仙缘+'+Math.min(LEGACY(),3)+'</b>。')+
+ panel('gold','再入红尘','<div class="center" style="padding:8px"><button class="btn" data-a="newgame">'+tag('转世重修','vio')+' 携宿慧重来</button></div>');
+}
+function ascend(){
+ const p=G.c;DEAD=true;
+ sSet('wdcs_legacy',String(LEGACY()+1));
+ sDel('wdcs_save');
+ G=null;
+ $('#app').innerHTML='<h1 class="title">飞升</h1><div class="sub">天玄历 '+p.y+' 年 · 作者：雾见川</div>'+
+ panel('vio','白云之外','<div class="center" style="line-height:2.1">九重雷云让开一条缝，金桥横贯南北。<br>'+esc(p.dao)+'（'+esc(p.name)+'）着一件洗旧道袍踏上桥头，回头看了一眼：<br>九州烟火，故人坟茔，青山依旧。<br><b>「诸君，我去也。」</b><br>'+finalSummary()+'</div>')+
+ panel('gold','轮回','<div class="center" style="padding:8px"><button class="btn" data-a="newgame">'+tag('轮回重修','vio')+' 带着一世仙缘再来一趟（仙缘+'+Math.min(LEGACY(),3)+'）</button></div>');
+}
+
+/* ===================== 修炼/闭关/历练 ===================== */
+function doCult(){const p=G.c,g=cultGain(p,false);
+ addCult(p,g);
+ say('晨昏吐纳一周天，修为 +<b>'+g.toFixed(1)+'</b>（'+MN[p.m-1]+'月）。');
+ afterAction();
+}
+function closedDoors(){
+ const inp=prompt('闭关多少个月？（1~240 · 双倍速率 · 大事会惊醒你）','12');
+ if(inp===null)return;
+ const mo=CL(parseInt(inp)||0,1,240);if(!mo)return;
+ const p=G.c,startY=p.y,startM=p.m,sc=p.cult;
+ for(let i=0;i<mo;i++){
+  addCult(p,cultGain(p,true));
+  p.hp=CL(p.hp+4,0,p.hpM);p.mp=CL(p.mp+5,0,p.mpM);
+  if(!monthTick(p))return;
+  if((p.y*12+p.m)%12===0)p.wu=Math.min(99,p.wu+1);
+  if(D100()<=4){p.att[4]=Math.max(1,p.att[4]-1);say('心魔忽至：旧日懊悔立于识海。你咬牙镇压，一夜无眠。（道心-1）','p');break;}
+  if(p.cult>=needOf(p)){say('水到渠成——关中自查，气息已圆满。适时破关而出！','y');break;}
+ }
+ say('<span class="lg-s">闭关 '+((p.y-startY)*12+(p.m-startM))+' 月 · 修为 '+Math.floor(sc)+' → '+Math.floor(p.cult)+'</span>','s');
+ checkAuto();
+}
+function pickHerb(d){
+ const arr=[[{n:'百草露',v:15},{n:'赤芝',v:40}],
+            [{n:'赤芝',v:40},{n:'百年野参',v:120}],
+            [{n:'百年野参',v:120},{n:'雪魄莲',v:260}],
+            [{n:'雪魄莲',v:260},{n:'千载空青',v:520}],
+            [{n:'千载空青',v:520},{n:'九叶还魂草',v:900}]][CL(d,0,4)];
+ return Object.assign({},arr[RI(arr.length)]);
+}
+function explore(){
+ const p=G.c,r=D100(),d=REGIONS[p.region].e,myR=p.rIdx+1;
+ const boost=myR<d?(d-myR)*15:0;
+ if(r<=34){
+  const h=pickHerb(d);addHerb(h);
+  say(myR<d?('龙潭虎穴里居然摸到一株【'+h.n+'】——但这里终究不该你来。'):('崖畔幽处，得一株【'+h.n+'】！（背包可售）'),'g');
+ }else if(r<=58){
+  const e=mkEnemy(myR<d?p.rIdx+1:p.rIdx,1,false);
+  say(myR<d?'<span class="danger">层层威压自四面八方碾下——此地妖邪视你如蝼蚁！</span>':'半路杀出一个不讲武德的！');
+  startCombat(e);return;
+ }else if(r<=66){
+  if(D100()<50+p.att[3]*2){p.rep++;say('与一名游方剑修点到为止，技高一筹，小小扬名（声望+1）。','g');}
+  else say('与人切磋落了下风，对面一笑收剑：「承让。」你在风中凌乱片刻。','s');
+ }else if(r<=74){
+  say('循着微弱灵光寻得一处秘境入口，孤身而入……','g');
+  let fought=false;
+  for(let i=0;i<3&&!fought;i++){
+   const x=D100();
+   if(x<=45){const v=Math.floor((30+d*50)*(1+p.rIdx*0.5)*(0.7+Math.random()*0.6));moneyGet(p,v);}
+   else if(x<=72){const h=pickHerb(d);addHerb(h);say('洞天深处，采得【'+h.n+'】。','g');}
+   else{say('深处有守护残魂苏醒——','');startCombat(mkEnemy(p.rIdx+(d>1?1:0),1,true));fought=true;}
+  }
+  if(!fought){
+   if(p.awaken.length<9&&D100()<10){grantAwaken();}
+   afterAction();return;
+  }
+  return;
+ }else if(r<=80){
+  const g=['聚气丹','回春丹'][RI(2)];addItem(g,1);p.merit++;
+  say('一名邋遢老者讨酒喝，你把葫芦递上。他大笑而去，袖中滚出一枚【'+g+'】。（功德+1）','g');
+ }else if(r<=(86+boost)&&boost>0){
+  say('<span class="danger">此地本不该你来——杀机已至！</span>');
+  startCombat(mkEnemy(p.rIdx+1,1.15,true));return;
+ }else if(r<=93){
+  p.wu++;say('空山新雨，溪畔枯坐一日，隐隐有所明悟。（悟道点+1）','g');
+ }else say('一无所获，倒遇见几户烧炭人家，灯火可亲。','s');
+ afterAction();
+}
+
+/* ===================== 突破 ===================== */
+function btSmall(){
+ const p=G.c;if(p.cult<needOf(p))return;
+ const rate=CL(62+p.att[4]*2.4,50,95);
+ if(!monthAct())return;
+ if(D100()<=rate){
+  p.stg++;p.cult=0;p.hpM+=6;p.mpM+=6;p.hp=p.hpM;p.mp=p.mpM;
+  say('<b class="lg-g">瓶颈应声而碎！晋升 '+RL[p.rIdx].n+' · '+STG[p.stg]+'，气血灵力上限各增。</b>','g');
+  if(D100()<=30){p.wu++;say('破境之际灵台清明，悟道点+1。','g');}
+ }else{
+  p.cult=Math.floor(needOf(p)*0.7);p.hp=Math.max(5,p.hp-15);
+  say('气机一滞，逆转反噬，喉头一甜。<b>冲击失败</b>，修为跌回七成。','r');
+ }
+ checkAuto();
+}
+function btBig(path){
+ const p=G.c;if(p.cult<needOf(p)||p.stg<3)return;
+ if(path==='H'){
+  if(cntBag('人道破境丹')<1){
+   if(confirm('手中无人间破境丹。以 '+RDprice()+' 灵石向坊市急购一枚？')){
+    if(p.stones<RDprice()){say('灵石不够，掌柜摇头。','r');render();return;}
+    p.stones-=RDprice();addItem('人道破境丹',1);
+   }else return;
+  }
+  removeItem('人道破境丹',1);
+ }else if(path==='D'){
+  if(cntBag('天材地宝')<2){say('需天材地宝两枚，尚缺 '+(2-cntBag('天材地宝'))+' 枚。','r');render();return;}
+  removeItem('天材地宝',2);
+ }else{
+  if(cntBag('天材地宝')<1||cntBag('五行灵珠')<1){say('天道之路：须天材地宝 + 五行灵珠齐备。','r');render();return;}
+  removeItem('天材地宝',1);removeItem('五行灵珠',1);
+ }
+ if(!monthAct())return;
+ let base=path==='H'?88:path==='D'?72:52;
+ base-=p.rIdx*4;base+=Math.floor((p.att[4]-10)*1.5);
+ if(p.abn.includes('心魔缠身'))base-=25;
+ base=CL(base,15,95);
+ say('你择【'+({H:'人道 · 丹力引桥',D:'地道 · 万宝铺路',T:'天道 · 紫霄印证'})[path]+'】，危坐不动，轰开大门——','p');
+ if(path==='T'||(path==='D'&&D100()<50)){
+  let hits=2+Math.min(2,Math.floor(p.rIdx/3));
+  if(p.karma>=10){hits++;say('<span class="lg-r">业力沸腾，苍穹色变——这一劫比寻常更狠。</span>');}
+  if(p.merit>=10){hits--;say('<span class="lg-g">微光垂落，功德护你一线（减一道雷）。</span>');}
+  G.tb={bonus:path,base:base,hitsLeft:Math.max(1,hits),round:0};
+  triRender();return;
+ }
+ finishBig(path,base,2);
+}
+
+/* ===================== 宗门/坊市/洞府/社交 ===================== */
+function joinSect(){
+ const p=G.c;if(!monthAct())return;
+ if(p.att[0]+p.att[1]>=15||D100()>70){
+  p.sect='青云宗';p.rank=1;p.contrib=0;
+  say('<b class="lg-g">执事长老验过根骨，颔首：「入外门吧。」自此腰间多了一枚青玉牌。</b>','g');
+ }else say('长老皱眉：根基驳杂，不堪造就。你红着脸下了山——来年请早。','r');
+ render();
+}
+function doJob(ti){
+ const p=G.c,jobs=[{n:'巡逻',pay:30,risk:0},{n:'采药',pay:20,risk:1,herb:1},{n:'猎妖',pay:70,risk:2},{n:'护送',pay:90,risk:2}];
+ const j=jobs[ti];
+ if(j.risk&&D100()<=15+j.risk*10){say('办差途中杀出个不讲武德的——');startCombat(mkEnemy(p.rIdx,0.95,j.n==='猎妖'));return;}
+ moneyGet(p,j.pay);p.contrib+=10+Math.floor(j.pay*0.2);
+ if(j.herb){const h=pickHerb(REGIONS[p.region].e);addHerb(h);say('顺手采得【'+h.n+'】。','g');}
+ if(p.rank===1&&p.contrib>=120){
+  p.rank=2;p.contrib=0;
+  if(p.gongfa.g==='黄')p.gongfa={n:'长春功',g:'玄'};
+  say('<b class="lg-g">贡献卓著，擢升内门弟子！授《'+p.gongfa.n+'》（'+p.gongfa.g+'阶）。</b>','g');
+ }else if(p.rank===2&&p.contrib>=300){
+  p.rank=3;p.contrib=0;
+  if(p.rIdx>=2)p.gongfa={n:'玄元剑经',g:'地'};
+  say('<b class="lg-g">真传名录上有了你的名字。长老亲授'+(p.rIdx>=2?'《玄元剑经》（地阶）':'道法')+'，阖宗瞩目。</b>','g');
+ }
+ afterAction();
+}
+function leaveSect(){
+ if(!confirm('叛出师门？声望大跌，宗门或将追杀叛徒。真的要走这条独木桥？'))return;
+ const p=G.c;p.sect=null;p.rank=0;p.rep=Math.max(0,p.rep-30);
+ say('深夜，你摘下腰牌放在石阶上，一步跨过山门界碑。<b class="lg-r">从此山高水远，恩断义绝。</b>','r');
+ afterAction();
+}
+function buyItem(nm){
+ const m=MK.find(x=>x.n===nm),p=G.c;
+ if(!m||p.stones<m.p){toast('灵石不足');render();return;}
+ p.stones-=m.p;
+ if(m.ty==='gf'){p.gongfa=m.to;say('购得《'+m.to.n+'》，闭户参详三日，功法已然更替！','g');}
+ else{addItem(nm,1);say('购得【'+nm+'】×1。','y');}
+ render();
+}
+function useItem(idx){
+ const p=G.c,it=p.bag[idx],m=MK.find(x=>x.n===it.n);
+ if(!m||!m.fx){toast('此物须在战斗中使用');return;}
+ removeItem(it.n,1);m.fx(p);say('服下【'+it.n+'】：'+m.d+'。','g');render();
+}
+function sellHerb(i){
+ const p=G.c,h=p.herbs[i];if(!h)return;p.herbs.splice(i,1);
+ moneyGet(p,h.v);say('售出【'+h.n+'】。','y');render();
+}
+function caveUp(kind){
+ const p=G.c;
+ if(kind==='lv'){const cost=[400,1800,6000][p.cave.lv];if(cost===undefined||p.stones<cost){render();return;}p.stones-=cost;p.cave.lv++;say('<b class="lg-g">延请阵师，聚灵改穴，洞府气象一新！（修炼灵气系数提升）</b>','g');}
+ else if(kind==='room'&&p.stones>=300){p.stones-=300;p.cave.jingShi=true;say('辟出静室一座，檀香袅袅，闭关事半功倍。','g');}
+ else if(kind==='zhen'&&p.stones>=200){p.stones-=200;p.cave.zhen=true;say('布下护山禁制，宵小难侵。','g');}
+ render();
+}
+function affAdd(id,v){
+ const p=G.c;
+ v=Math.round(Math.round(v*(p.charmBonus||1))*(1+(p.wuT[4]?p.wuT[4]*0.2:0)));
+ p.rel[id]=CL((p.rel[id]||0)+v,0,100);
+ return v;
+}
+function socTalk(id){
+ const p=G.c,n=NPCS.find(x=>x.id===id);
+ const hit=D100()<35+p.att[5]*2;
+ const dv=affAdd(id,1+(p.zi==='超凡'?2:p.zi==='出众'?1:0)+(hit?2:0)+(p.path==='守护所爱'&&D100()<20?1:0));
+ say('与'+n.n+'相谈'+(hit?'甚欢，临别时眼底有光一闪':'寒暄几句，尚隔一层')+'。（好感+'+dv+'）','p');
+ afterAction();
+}
+function socGift(id){
+ const p=G.c;
+ if(p.stones<30){toast('囊中羞涩，先赚灵石吧');render();return;}
+ p.stones-=30;
+ const n=NPCS.find(x=>x.id===id),hit=D100()<45;
+ const dv=affAdd(id,hit?6:3);
+ say(hit?('你留意其喜好挑礼，'+n.n+'眼中笑意藏不住。（好感+'+dv+'）'):(n.n+'礼节性致谢——礼物略显俗套。（好感+'+dv+'）'),'p');
+ afterAction();
+}
+function lunDao(id){
+ const p=G.c;
+ if((p.rel[id]||0)<20){const dv=affAdd(id,2);say('泛泛论了几句山水。（好感+'+dv+'）','p');}
+ else{
+  p.wu++;const dv=affAdd(id,3);
+  say('竹庐对坐，烹泉论道，各得印证。（悟道点+1 · 好感+'+dv+'）','g');
+  if(D100()<20){addCult(p,needOf(p)*0.08);say('论及紧要处，醍醐灌顶，修为大进！','g');}
+ }
+ afterAction();
+}
+function dual(id){
+ const p=G.c;
+ if((p.rel[id]||0)<60){toast('时机未到，情之所钟不可强求');render();return;}
+ const mul=(p.con==='纯阳体/玄阴体'?1.6:1)*(p.awaken.some(a=>a.startsWith('双修'))?1.5:1);
+ addCult(p,cultGain(p,false)*2*mul);const dv=affAdd(id,5);
+ heal(p,'hp',30);heal(p,'mp',30);
+ say('霜天将晓，琴瑟和鸣。两人修为皆涨，心结亦松三分。（好感+'+dv+'）','p');
+ afterAction();
+}
+function marry(id){
+ const p=G.c;
+ if(confirm('与'+npcName(id)+'结为道侣？此后同修共渡，福祸同当。')){
+  p.dao=id;affAdd(id,5);p.merit+=2;
+  say('<b style="color:#b25984">红叶为盟，星河为鉴——自此你们的道，是一双人的道。</b>');
+  if(p.path==='守护所爱')say('守护所爱的路，终于不再是一个人的朝圣。','p');
+ }
+ render();
+}
+function learnWu(i){
+ const p=G.c;if(p.wu<1||p.wuT[i]>=5){render();return;}
+ p.wu--;p.wuT[i]++;
+ say(WU_TREES[i].n+'参悟加深至 '+p.wuT[i]+' 层。','g');render();
+}
+
+/* ===================== 自由行动 ===================== */
+function freeInput(txt){
+ txt=(txt||'').trim();if(!txt)return;
+ if(!G)return;
+ if(G.cb){toast('战斗之中，容不得旁骛');return;}
+ const p=G.c;
+ const npcHit=NPCS.find(n=>txt.includes(n.n));
+ if(/闭关/.test(txt)){closedDoors();return;}
+ if(/修炼|打坐|运功|吐纳/.test(txt)){doCult();return;}
+ if(/历练|游历|探险|闯荡|下山|出门|秘境/.test(txt)){
+  if(isDangerHere()&&!confirm('警告：此地危险等级高于你的修为。\n\n修仙界没有主角光环，真的会死。\n\n确认仍要去？'))return;
+  explore();return;
+ }
+ if(/抢劫|杀人夺宝|灭口|偷袭|黑吃黑/.test(txt)){
+  if(confirm('此为恶行：业力+10；失手反遭缠斗。当真要做？')){
+   p.karma+=10;
+   if(D100()>50+p.att[3]){moneyGet(p,50+p.rIdx*40);say('月黑风高，一桩无头的买卖成了。你告诫自己：仅此一次。<b class="lg-r">（业力+10）</b>');}
+   else{say('失手了！对方咬住不放——');startCombat(mkEnemy(p.rIdx+1,1.1,false));return;}
+   afterAction();return;
+  }
+  render();return;
+ }
+ const reg={'南疆':1,'西漠':2,'北原':3,'中州':4,'东洲':0,'青岳':0,'赤炎':1,'流沙':2,'寒渊':3,'天阙':4};
+ for(const k in reg){if(txt.includes(k)){doTravel(reg[k]);return;}}
+ if(/坊市|买|购物|淘货/.test(txt)){p.view='mkt';say('你去天机坊市转了一圈。','s');render();return;}
+ if(/地图/.test(txt)){p.view='map';render();return;}
+ if(/背包|物品|丹药/.test(txt)){p.view='bag';render();return;}
+ if(npcHit){p.view='soc';say('你想起了'+npcHit.n+'。','p');render();return;}
+ if(/拜师|入门|宗门/.test(txt)){p.view='sect';render();return;}
+ if(/悟道|参悟/.test(txt)){p.view='wu';render();return;}
+ if(/隐居|种菜|躺平|摆烂/.test(txt)){say('你说到做到，就地支起茶棚晒了半月太阳。日子很好，只是修行搁下。','s');afterAction();return;}
+ const r=D100();
+ if(r<=40){addCult(p,needOf(p)*0.03);say('依你所想行事：「'+esc(txt)+'」。虽是小事，心中一畅，境界微有所得。');}
+ else if(r<=70){p.wu++;say('你做了件不寻常的事——「'+esc(txt)+'」——事后回味，竟有所悟。（悟道点+1）','g');}
+ else{moneyGet(p,8);say('按你说的做了，糊里糊涂还有几块灵石进账。','y');}
+ afterAction();
+}
+function doTravel(to){
+ const p=G.c;if(to===p.region)return;
+ if(p.rIdx+1<REGIONS[to].rec&&!confirm('警告：【'+REGIONS[to].n+'】推荐 '+REGNAME[REGIONS[to].rec]+'。\n你身为 '+RL[p.rIdx].n+' 修士贸然而往，遭欺压乃至身死都是常态。\n\n仍要启程？'))return;
+ p.region=to;say('动身前往【'+REGIONS[to].n+'】……一路风尘，抵达时正是'+season()+'。');
+ afterAction();
+}
+function isDangerHere(){const p=G.c;return (p.rIdx+1)<REGIONS[p.region].rec;}
+
+/* ===================== 存取档 ===================== */
+function save(){try{sSet('wdcs_save',JSON.stringify({c:G?G.c:null}));}catch(e){}}
+function load(){
+ try{
+  const d=JSON.parse(sGet('wdcs_save'));
+  if(!d||!d.c)return false;
+  DEAD=false;C=null;G={c:d.c};G.log=['<span class="lg-s">（前尘往事涌上心头，接续旧梦。）</span>'];G.c.view='main';
+  render();return true;
+ }catch(e){return false;}
+}
+
+/* ===================== 总控：点击（事件委托） ===================== */
+document.addEventListener('click',function(e){
+ const el=e.target.closest('[data-a]');
+ if(!el)return;
+ const a=el.dataset.a,v=el.dataset.v;
+ /* 标题/死亡页：只允许新局与读档 */
+ if(!G&&!C){if(a==='newgame'){C=newChar();DEAD=false;renderCreate(1);}else if(a==='load'){if(!load())alert('没有找到有效存档');}return;}
+ /* 创角阶段（C 存在且尚未开局） */
+ if(C&&!G){
+  switch(a){
+   case 'sex':C.sex=v;if(v!=='自')C.customSex='';renderCreate(C._step);return;
+   case 'po':C.origin=+v;renderCreate(1);return;
+   case 'pp':C.path=+v;renderCreate(1);return;
+   case 'pr':
+    if(ROOTS[+v].varOnly){const roll=D100();if(roll<=60){alert('机缘不足（骰出 '+roll+'，需大于60方能觉醒变异灵根）——血脉沉寂，另择良根吧。');return;}}
+    C.root=+v;C.eles=[];renderCreate(2);return;
+   case 'pc':
+    if(CONS[+v].n==='混沌体'&&D100()>85){alert('传说品质岂是人人可得（需骰出大于85的机缘）——混沌之气悄然退散。');return;}
+    C.con=+v;renderCreate(2);return;
+   case 'pe':{
+    const k=v,maxN=C.root===0?1:C.root===1?2:C.root===2?3:5;
+    if(C.eles.includes(k))C.eles=C.eles.filter(x=>x!==k);
+    else if(C.eles.length<maxN)C.eles.push(k);else C.eles[maxN-1]=k;
+    renderCreate(2);return;}
+   case 'pt':{
+    const td=TALENTS.find(x=>x.n===v);
+    let spent=C.talents.reduce((s,x)=>{const t=TALENTS.find(y=>y.n===x);return s+t.c;},0);
+    if(C.talents.includes(v))C.talents=C.talents.filter(x=>x!==v);
+    else{if(td.c>0&&spent+td.c>5){toast('天赋点不足');return;}C.talents.push(v);}
+    renderCreate(2);return;}
+   case 'incA':{const i=+v,used=C.alloc.reduce((x,y)=>x+y,0);if(C.alloc[i]<15&&used<60)C.alloc[i]++;renderCreate(2);return;}
+   case 'decA':{const i=+v;if(C.alloc[i]>1)C.alloc[i]--;renderCreate(2);return;}
+   case 'crnext1':{
+    const cn=$('#cn');if(cn&&cn.value.trim())C.name=cn.value.trim();
+    const cs=$('#cs');if(cs&&cs.value.trim())C.customSex=cs.value.trim();
+    const ck=$('#clk');if(ck&&ck.value.trim())C.look=ck.value.trim();
+    if(C.origin<0||C.path<0)return;
+    renderCreate(2);return;}
+   case 'crback':renderCreate(1);return;
+   case 'crdone':finishCreate();return;
+  }
+  return;
+ }
+ if(!G)return;
+ const p=G.c;
+ switch(a){
+  case 'vmain':p.view='main';render();break;
+  case 'vmap':p.view='map';render();break;
+  case 'vmkt':p.view='mkt';render();break;
+  case 'vbag':p.view='bag';render();break;
+  case 'vsect':p.view='sect';render();break;
+  case 'vcave':p.view='cave';render();break;
+  case 'vsoc':p.view='soc';render();break;
+  case 'vwu':p.view='wu';render();break;
+  case 'vhelp':p.view='help';render();break;
+  case 'fcgo':{const ip=$('#fcmd');const val=ip?ip.value:'';if(ip)ip.value='';freeInput(val);break;}
+  case 'cult':doCult();break;
+  case 'closed':closedDoors();break;
+  case 'explore':if(isDangerHere()&&!confirm('警告：此地危险等级高于你的修为，贸然历练极可能重伤乃至身死。\n\n确认仍要去？'))return;explore();break;
+  case 'rest':heal(p,'hp',Math.floor(p.hpM*0.25));heal(p,'mp',Math.floor(p.mpM*0.3));
+   if(p.abn.includes('重伤')&&D100()>50){p.abn.splice(p.abn.indexOf('重伤'),1);say('卧榻静养月余，重伤渐愈。','g');}
+   say('焚香沐浴，静养一月，气血归盈。','g');afterAction();break;
+  case 'travel':doTravel(+v);break;
+  case 'useIt':useItem(+v);break;
+  case 'sellH':sellHerb(+v);break;
+  case 'buy':buyItem(v);break;
+  case 'joinSect':joinSect();break;
+  case 'job':doJob(+v);break;
+  case 'leaveSect':leaveSect();break;
+  case 'upCave':caveUp('lv');break;
+  case 'setRoom':caveUp('room');break;
+  case 'setZhen':caveUp('zhen');break;
+  case 'talk':socTalk(v);break;
+  case 'gift':socGift(v);break;
+  case 'lunDao':lunDao(v);break;
+  case 'dual':dual(v);break;
+  case 'marry':marry(v);break;
+  case 'learnWu':learnWu(+v);break;
+  case 'doSave':save();toast('已存档（本机）');break;
+  case 'restart':if(confirm('丢弃当前进度？直接重开不计入轮回。')){sDel('wdcs_save');G=null;DEAD=false;C=null;render();}break;
+  case 'btS':btSmall();break;
+  case 'btBH':btBig('H');break;
+  case 'btBD':btBig('D');break;
+  case 'btBT':btBig('T');break;
+  case 'tbTake':resolveStrike('take');break;
+  case 'tbFu':resolveStrike('fu');break;
+  case 'tbMerit':resolveStrike('merit');break;
+  case 'pkAw':{
+   const aw=G.pick.list[+v];p.awaken.push(aw.split('（')[0]);
+   if(aw.startsWith('气运如虹'))p.att[5]=CL(p.att[5]+2,1,20);
+   if(aw.startsWith('天眼通'))p.att[2]=CL(p.att[2]+3,1,20);
+   if(aw.startsWith('心如磐'))p.att[4]=CL(p.att[4]+3,1,20);
+   if(aw.startsWith('万里神行'))p.att[3]=CL(p.att[3]+3,1,20);
+   if(aw.startsWith('肉身成圣')){p.hpM=Math.floor(p.hpM*1.25);p.hp=p.hpM;}
+   if(aw.startsWith('大道之体'))for(let i=0;i<6;i++)p.att[i]=CL(p.att[i]+1,1,20);
+   say('<b style="color:#7a5fa8">【逆天改命 · '+aw.split('（')[0]+'】烙入神魂！</b>');
+   G.pick=null;checkAuto();break;}
+  case 'cbA':cbFight('atk');break;
+  case 'cbQ':cbFight('chg');break;
+  case 'cbD':cbFight('def');break;
+  case 'cbR':cbFight('flee');break;
+  case 'cbT':cbFight('talk');break;
+  case 'cbU':cbUse(+v);break;
+  case 'cbS':cbSurrender();break;
+ }
+});
+/* 自由输入框：回车提交（无表单，绝不触发页面导航） */
+document.addEventListener('keydown',function(e){
+ const t=e.target;
+ if(t&&t.id==='fcmd'&&e.key==='Enter'){
+  e.preventDefault();
+  const val=t.value;t.value='';
+  freeInput(val);
+ }
+});
+function toast(msg){const d=document.createElement('div');d.textContent=msg;d.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#3F3A34;color:#FBF8F1;padding:6px 16px;border-radius:6px;z-index:99';document.body.appendChild(d);setTimeout(()=>d.remove(),1400);}
+function finishCreate(){
+ const left=60-C.alloc.reduce((x,y)=>x+y,0);
+ if(left!==0){alert('还有 '+left+' 点属性未分配');return;}
+ const p=buildPlayer();
+ DEAD=false;G={c:p};G.log=[];
+ G.log.push(
+  '<span class="lg-n">灵气潮汐前的第三十九个春天，青岳山道上人来人往。</span>',
+  '<span class="lg-n"><b>你叫'+p.name+'，'+p.sex+'，'+p.age+'岁——如今更是「'+p.dao+'」。</b></span>',
+  '<span class="lg-n">仙姿'+p.zi+'，'+p.rootType+'（'+(p.eles.join('')||'未显')+'），携《'+p.gongfa.n+'》入道，怀揣'+p.stones+'块灵石。</span>',
+  '<span class="lg-n">'+(p.path==='守护所爱'?'你心底压着一个名字和一句没说出口的承诺。':'灵气复苏的前夜，人人都在赌一个未来。')+'</span>');
+ save();render();
+}
+render();
+</script>
+</body>
+</html>
