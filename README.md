@@ -73,6 +73,12 @@
 - **结契器灵**：魂附残器转世重逢
 - **六册图鉴**：丹药、法器、妖兽、秘境、人杰、结局 —— 跨轮回永久收集
 
+### 🎵 仙乐坊 · 背景乐
+- 打开游戏随机起奏一曲，曲终自动换曲续播
+- 右上角 ♪ 图标点开乐坊面板：39 曲自选、播放/暂停、切曲、音量（记忆音量）
+- 网页版读取本机音乐库（`C:\Users\Legion\Music`）；**Android 版内置全部 39 曲**（APK 约 289 MB），打开即播
+- 卷首、游戏内、结局页全程常驻
+
 ### 🏁 多元结局
 不止坐化与飞升：
 - **魔堕**：业力深重，渡劫化魔
@@ -125,6 +131,23 @@
 - **备份机制**：读取其他档位前自动备份当前进度到 `wdcs_backup`
 - **跨设备**："导出存档 JSON" 打包进度+图鉴+史册为文件，新设备"导入"即续
 - **轮回史册**：每一世结局自动记录，可在卷首/史册页翻阅前尘
+
+---
+
+## 📱 Android 版
+
+APK 已构建完成：**`D:\Desktop\问道长生-安卓版.apk`**（约 289 MB，含内置 39 首背景乐；debug 签名，Android 5.0+ 直接安装）。
+
+- **工程位置**：`C:\Users\Legion\Documents\Default Project\APKProject\`（WebView 壳，minSdk 21 / targetSdk 34，纯离线、零网络权限）
+- **游戏文件**：`app/src/main/assets/index.html`——更新游戏后重新复制进去再打包即可
+- **原生桥接**：存档导出走系统分享、导入走 SAF 文件选择器、渡劫/破境震动反馈、游戏内屏幕常亮
+- **内置音乐**：39 首背景乐打包于 `assets/music/`（m01~m39，游戏按序号引用）；音乐目录另有增删时，同步 BGM_FILES 数组并按序重拷文件后重新打包
+- **重新构建**（本机无需 Android Studio，命令行一键）：
+  ```powershell
+  $env:JAVA_HOME = "D:\android-env\jdk17"
+  & "C:\Users\Legion\Documents\Default Project\APKProject\gradlew.bat" assembleDebug -p "C:\Users\Legion\Documents\Default Project\APKProject"
+  ```
+  详见工程内 `BUILD_README.md`
 
 ---
 
