@@ -1095,6 +1095,8 @@ function applyOffline(p){
   const stones=Math.floor(mo*10*Math.pow(1.9,p.rIdx));
   p.stones+=stones;
   G.log.push('<span class="lg-s">【挂机收益】离山 '+days+' 日，闭关苦修折算 '+mo+' 个月——修为 +'+fmtN(cg)+' · 灵石 +'+fmtN(stones)+'。</span>');
+  /* 离线报告：回档首屏弹出 */
+  window.__offlineRpt={days:days,mo:mo,cg:cg,stones:stones};
  }catch(e){console.warn('离线收益异常:',e);}
 }
 
@@ -1128,6 +1130,9 @@ function buildPlayer(){
   P.att[5]=CL(P.att[5]+lg,1,20);
   if(p.root===4&&!p.eles.length){p.eles=[Object.keys(VAR)[RI(3)]];P.eles=p.eles.slice();}
   for(const t of p.talents){const td=TALENTS.find(x=>x.n===t);if(td)td.f(P);}
+  const DG=parseInt(sGet('wdcs_daoguo')||'0');
+  P.daoGuo=DG;
+  P.att[0]=CL(P.att[0]+Math.min(5,Math.floor(DG/40)),1,20);
   if(lg>0){
    let ll=null;try{ll=JSON.parse(sGet('wdcs_lastlife')||'null');}catch(e){}
    if(ll){
@@ -1191,6 +1196,7 @@ function cultGain(p,closed){
   v*=(1+zwStat(p,'cult')/100);
   v*=(1+bondSum(p,'cult')/100);
   v*=(1+metaBonus(p,'cult')/100);
+  v*=(1+Math.min(0.3,(p.daoGuo||0)/400)); /* 道果：累世道行的沉淀 */
   return v;}
 function needOf(p){return RL[p.rIdx].need;}
 function addCult(p,v){if(p)p.cult=CL(p.cult+v,0,Math.max(9999,needOf(p)*1.5));}
@@ -1249,6 +1255,14 @@ function applyAtmos(){
 }
 function render(){
  applyAtmos();
+ try{
+  if(window.__offlineRpt&&G&&G.c&&!G.ev&&!G.cb&&!G.pick){
+   const R2=window.__offlineRpt;window.__offlineRpt=null;
+   G.ev={theme:'gold',title:'离线闭关报告',
+    body:'你离山 <b>'+R2.days+'</b> 日，道躯入定 <b>'+R2.mo+'</b> 个月：<br><br>修为 <b class="lg-y">+'+fmtN(R2.cg)+'</b> · 灵石 <b class="lg-y">+'+fmtN(R2.stones)+'</b><br><br><small>山中无岁月，出关已是物换星移。</small>',
+    opts:[{t:'收功',d:'继续前行',fx:()=>{render();}}]};
+  }
+ }catch(e){}
  if(G&&G.c)try{G.c.lastActive=Date.now();}catch(e){}
  const a=$('#app');
  if(!G){a.innerHTML=titleHTML();return;}
@@ -1357,6 +1371,7 @@ const eles=p.eles.map(e=>'<span class="echip" style="background:'+(VAR[e]||EL[e]
  '<div>因果：善缘 '+(p.karmaGood||0)+' · 恶缘 '+(p.karmaEvil||0)+' · 净业 <span style="color:'+karmaLevel(p).c+'">'+karmaLevel(p).n+'</span> <small>（'+karmaLevel(p).desc+'）</small></div>'+
  '<div>'+ATTN.map((n,i)=>n+' '+p.att[i]).join(' · ')+'</div>'+
  '<div>仙姿 '+p.zi+' · 灵根 '+p.rootType.replace('灵根','')+' '+eles+'</div>'+
+ '<div>道果 <b style="color:#D4A017">'+(p.daoGuo||0)+'</b> <small>（累世修行·修炼+'+Math.min(30,Math.floor((p.daoGuo||0)/4))+'%）</small></div>'+
  '<div>功法《'+p.gongfa.n+'》（'+p.gongfa.g+'阶）· 所在 '+REGIONS[p.region].n.split(' · ')[1]+'</div>'+
  '<div>'+(p.sect?p.sect+' · '+['','一等','二等','三等'][SECTS.find(s=>s.id===p.sectId)?.tier||0]+'宗 · '+['外门','内门','真传'][p.discipleType]+(p.master?' · 师尊'+p.master:''):'散修（无宗门）')+(p.guoshi?' · 钦天监国师':'')+'</div>'+
  (p.beast?'<div>灵兽 '+p.beast.n+' · '+['幼兽','成长','成年','通灵'][p.beast.lv]+' · 亲密度 '+Math.min(p.beast.exp,p.beast.lv>=3?99:(p.beast.lv+1)*4)+'/'+(p.beast.lv>=3?99:(p.beast.lv+1)*4)+'</div>':'')+
@@ -2794,6 +2809,13 @@ function finishBig(path,rate,hits){
    afterAction();showUnlocks(p);grantAwaken();resetTribPrep();return;
   }
  if(p.karma>=15&&p.merit<10&&D100()<=50){moDuo(1);return;}
+ /* 首败护道：生平第一次大突破失利，天道不予苛责 */
+ if(!((p.flags||{}).firstFail)){
+  p.flags=p.flags||{};p.flags.firstFail=1;
+  p.cult=Math.floor(needOf(p)*0.8);p.hp=Math.max(5,p.hp-15);
+  say('<b class="lg-g">【初败护道】大道留一线——生平首次冲关失利，天道不予苛责：修为保留八成，未留暗伤。</b>','g');
+  resetTribPrep();afterAction();return;
+ }
  if(p.rIdx>=6){
   p.cult=Math.floor(needOf(p)*0.6);p.stg=2;p.hp=Math.max(5,p.hp-40);
   if(!p.abn.includes('内伤'))p.abn.push('内伤');
@@ -3146,6 +3168,10 @@ function endScreen(o){
  dexRec('end',o.dex||o.title);
  saveChronicle({name:p.dao,end:o.title,rIdx:p.rIdx,age:p.age,kills:p.kills,merit:p.merit,karma:p.karma,rep:p.rep,path:p.path});
  saveLastLife(p,legacy);
+ try{
+  const dg=p.rIdx*5+Math.min(30,Math.floor((p.kills||0)/20))+Math.min(20,Math.floor((p.merit||0)/25))+(p.spouse?5:0);
+  sSet('wdcs_daoguo',String(parseInt(sGet('wdcs_daoguo')||'0')+dg));
+ }catch(e){}
  sSet('wdcs_legacy',String(LEGACY()+1));
  sDel('wdcs_save');
  G=null;C=null;applyAtmos();
@@ -3288,21 +3314,39 @@ function doCult(){const p=G.c,g=cultGain(p,false);p.flags.zuo1=1;
 }
 function closedDoors(){
  /* 手机端原生prompt会被拦截——改用游戏内择期面板 */
+ const side=G.closedSide||'纯修';
+ const sideD={纯修:'心无旁骛，专心吐纳',炼丹:'闭关间隙开炉——每年以存药炼丹一枚',研读:'参悟功法技能——每年熟练大进',采药:'于药园崖畔采药——每年得灵草一株'};
  const opts=[[6,'半年'],[12,'一年'],[36,'三年'],[60,'五年'],[120,'十年'],[360,'三十年'],[600,'百年']]
-  .map(x=>({t:'闭关'+x[1],d:'修为双倍速进 · 大事会惊醒你',fx:()=>{closedDoorsN(x[0]);}}));
+  .map(x=>({t:'闭关'+x[1],d:'副业·'+side+'：'+(sideD[side]||'')+' · 修为双倍速进',fx:()=>{closedDoorsN(x[0],side);}}));
+ opts.push({t:'换副业',d:'纯修 / 炼丹 / 研读 / 采药',fx:()=>{closedSidePick();}});
  opts.push({t:'罢了',d:'改日再修',fx:()=>{render();}});
- G.ev={theme:'bam',title:'闭关 · 择期',
-  body:'择一处静室，收束心神。闭关期间修为倍进，然大事必惊你出关。',
+ G.ev={theme:'bam',title:'闭关 · 择期（副业：'+side+'）',
+  body:'择一处静室，收束心神。闭关期间修为倍进，然大事必惊你出关。<br><small>多线并行：闭关亦可择一副业，岁月不空转。</small>',
   opts:opts};
  render();
 }
-function closedDoorsN(mo){
+function closedSidePick(){
+ const S=[['纯修','心无旁骛，专心吐纳'],['炼丹','闭关间隙开炉炼丹'],['研读','参悟功法技能熟练'],['采药','药园崖畔采撷灵草']];
+ G.ev={theme:'bam',title:'闭关 · 择一副业',
+  body:'闭关非枯坐——择一桩消遣，岁月亦有产出。',
+  opts:S.map(x=>({t:x[0],d:x[1],fx:()=>{G.closedSide=x[0];closedDoors();}}))};
+ render();
+}
+function closedDoorsN(mo,side){
  const p=G.c,startY=p.y,startM=p.m,sc=p.cult;
+ side=side||G.closedSide||'纯修';
  for(let i=0;i<mo;i++){
   addCult(p,cultGain(p,true)*(p.m===6?1.25:1));
   p.hp=CL(p.hp+4,0,p.hpM);p.mp=CL(p.mp+5,0,p.mpM);
   if(!monthTick(p))return;
-  if((p.y*12+p.m)%12===0)p.wu=Math.min(99,p.wu+1);
+  if((p.y*12+p.m)%12===0)p.wu=Math.min(99,p.wu+1); /* 每年悟道 */
+  if(i%3===2){ /* 闭关副业：每季一收（3月） */
+   try{
+    if(side==='炼丹'){if(cntHerb('百草露')>=2&&D100()<=alchRate(p)){useHerb('百草露',2);addItem('聚气丹',1);say('<span class="lg-g">【闭关副业·丹炉】凝气成丹，得【聚气丹】×1。</span>');}}
+    else if(side==='研读'){const ids=getGfSkills(p).map(s2=>Object.keys(SKILL_LIB).find(k=>SKILL_LIB[k]===s2)).filter(Boolean);if(ids.length){const sid=ids[RI(ids.length)];addSkillExp(p,sid,25);say('<span class="lg-s">【闭关副业·研读】'+SKILL_LIB[sid].n+'熟练大进。</span>');}}
+    else if(side==='采药'){const h2=pickHerb(REGIONS[p.region].e);addHerb(h2);say('<span class="lg-s">【闭关副业·采药】崖畔采得【'+h2.n+'】。</span>');}
+   }catch(e){}
+  }
   if(tryEpiphany(p,0.0015)){say('关中顿悟，破关而出！','g');break;} // 闭关顿悟概率0.15%/月
   if(D100()<=4){p.att[4]=Math.max(1,p.att[4]-1);say('心魔忽至：旧日懊悔立于识海。你咬牙镇压，一夜无眠。（道心-1）','p');break;}
   if(p.cult>=needOf(p)){say('水到渠成——关中自查，气息已圆满。适时破关而出！','y');break;}
@@ -3318,6 +3362,43 @@ function pickHerb(d){
             [{n:'千载空青',v:520},{n:'九叶还魂草',v:900}]][CL(d,0,4)];
  return Object.assign({},arr[RI(arr.length)]);
 }
+/* ===================== 奇遇录 · 境界分级事件池（文字修仙的灵魂） ===================== */
+const QIYU={
+ 0:[
+  {t:'老丐授拳',d:'破庙里老乞丐醉醺醺拉住你：「小子，骨架不错。」一套粗浅拳法竟暗合吐纳之理。',f:p=>{p.bodyExp=(p.bodyExp||0)+80;return '体魄+80';}},
+  {t:'拾获遗物',d:'草丛里躺着一柄锈迹斑斑的铜钱剑，摸了摸，竟还有几分灵性。',f:p=>{moneyGet(p,80);return '灵石+80';}},
+  {t:'茶棚听书',d:'说书先生讲一段仙人斗法，讲到妙处你豁然开朗。',f:p=>{addCult(p,needOf(p)*0.08);return '修为大进';}},
+  {t:'山涧灵泉',d:'渴极掬了一捧山泉，寒意直入四肢百骸——竟是眼浅的灵泉。',f:p=>{p.hpM=Math.round(p.hpM*1.02);p.hp=p.hpM;return '气血上限×1.02';}},
+  {t:'顽童偷丹',d:'偷丹的顽童被你逮个正着，丹药追回，顽童哭着跑了。',f:p=>{addItem('凝神丹',1);return '凝神丹×1';}}],
+ 1:[
+  {t:'古修残页',d:'塌了半边的洞府里，一页残简在石台上压了不知多少年。',f:p=>{addCult(p,needOf(p)*0.12);return '修为大进';}},
+  {t:'灵圃遗泽',d:'废弃灵圃的灵气散尽前，你抢收了几株将熟的灵草。',f:p=>{addHerb({n:'赤芝',v:40});addHerb({n:'雪魄莲',v:260});return '赤芝·雪魄莲';}},
+  {t:'断纹铭刻',d:'断剑残身上铭着一枚天然阵纹，你以神念拓了下来。',f:p=>{dropZhenwen(2,1);return '真文一枚';}},
+  {t:'剑修论道',d:'路遇剑修与你论剑三日，胜负不论，剑意已通。',f:p=>{p.wu=Math.min(99,p.wu+1);return '悟道点+1';}},
+  {t:'商队酬金',d:'替商队挡了一波劫匪，管事大方地数出一袋灵石。',f:p=>{moneyGet(p,800);return '灵石+800';}}],
+ 2:[
+  {t:'雷池淬体',d:'天然雷池中盘坐七日，紫雷洗髓，痛彻心扉却也脱胎换骨。',f:p=>{p.bodyExp=(p.bodyExp||0)+3000;return '体魄+3000';}},
+  {t:'前辈残魂',d:'一缕不愿散的前辈残魂与你论道一夜，天明时含笑而散。',f:p=>{p.wu=Math.min(99,p.wu+2);return '悟道点+2';}},
+  {t:'阵纹古碑',d:'古碑上的阵纹自行剥落，凝成一枚真文落入你手中。',f:p=>{dropZhenwen(6,1);return '真文一枚';}},
+  {t:'龙宫遗宝',d:'干涸的龙宫深处，宝匣静静躺着等你许多年了。',f:p=>{addItem('天材地宝',1);addItem('五行灵珠',1);return '天材地宝·五行灵珠';}},
+  {t:'因果一诺',d:'你替一位将死之人完成了最后一桩心愿。功德金光一闪而逝。',f:p=>{p.merit+=5;return '功德+5';}}],
+ 3:[
+  {t:'混元残意',d:'一缕混元大能的残意擦过识海——只是擦过，道基便厚了三分。',f:p=>{p.daoji=p.daoji||{pts:0,lv:{}};p.daoji.pts=(p.daoji.pts||0)+500;return '道基点+500';}},
+  {t:'大道之音',d:'天地之间忽有大道之音，闻之三日，胜修千年。',f:p=>{p.wu=Math.min(99,p.wu+3);return '悟道点+3';}},
+  {t:'仙府遗泽',d:'仙府开启，机缘泼天——你只来得及带走最重要几件。',f:p=>{addItem('五行灵珠',2);addItem('天材地宝',2);return '五行灵珠×2·天材地宝×2';}},
+  {t:'窥天一线',d:'天道垂下一线目光，你顺势望了进去——出来时已过旬月。',f:p=>{addCult(p,needOf(p)*0.3);return '修为暴涨';}},
+  {t:'涅槃灵莲',d:'一株涅槃灵莲自渡劫余烬中生根，服之肉身再无垢染。',f:p=>{p.hpM=Math.round(p.hpM*1.05);p.hp=p.hpM;return '气血上限×1.05';}}]
+};
+function qiyuEvent(){
+ const p=G.c;
+ const tier=Math.min(3,tierOf(p.rIdx));
+ const pool=QIYU[tier];
+ const ev=pool[RI(pool.length)];
+ const res=ev.f(p);
+ say('<b style="color:#D4A017">【奇遇·'+ev.t+'】</b>'+ev.d+'（'+res+'）','g');
+ markDeed('奇遇·'+ev.t);
+ afterAction();
+}
 function explore(){
   const p=G.c,r=D100(),d=REGIONS[p.region].e,myR=p.rIdx+1;p.flags.ex1=1;
   const boost=myR<d?(d-myR)*15:0;
@@ -3332,6 +3413,7 @@ function explore(){
   }
   if(!p.beast&&p.rIdx>=2&&D100()<=((p.awaken||[]).some(a=>a.startsWith('灵兽'))?16:8)){beastEvent();return;}
   if(rivalCheck())return;
+  if(D100()<=7){qiyuEvent();return;}
   const npcsHere=NPCS.filter(n=>n.loc===p.region&&!p.met[n.id]);
   if(npcsHere.length&&D100()<=7){
    const n=npcsHere[RI(npcsHere.length)];
@@ -4481,7 +4563,7 @@ function filesHTML(){
 /* ---------- 导出 / 导入（跨设备转移） ---------- */
 function exportSave(){
  try{
-  const keys=['wdcs_save','wdcs_backup','wdcs_dex','wdcs_chronicle','wdcs_legacy','wdcs_lastlife'];
+  const keys=['wdcs_save','wdcs_backup','wdcs_dex','wdcs_chronicle','wdcs_legacy','wdcs_lastlife','wdcs_daoguo'];
   for(let i=0;i<SLOT_MAX;i++)keys.push(slotKey(i));
   const data={};let n=0;
   keys.forEach(k=>{const v=sGet(k);if(v!==null&&v!==undefined){data[k]=v;n++;}});
@@ -5702,7 +5784,7 @@ document.addEventListener('click',function(e){
   else if(a==='bakDel'){sDel('wdcs_backup');$('#app').innerHTML=filesHTML();}
   else if(a==='autoDel'){if(confirm('确定删除自动存档（续缘档）？此进度将不可找回。')){sDel('wdcs_save');$('#app').innerHTML=filesHTML();}}
   else if(a==='slotDelTitle'){const i=+v;if(confirm('确定删除档位 '+(i+1)+'？此档进度将不可找回。')){slotDel(i);$('#app').innerHTML=filesHTML();}}
-  else if(a==='clearAll'){if(confirm('确定清空所有存档？\n\n包括：自动档、所有档位、备份、图鉴、史册、轮回记录。\n\n此操作不可撤销！')){sDel('wdcs_save');sDel('wdcs_backup');sDel('wdcs_dex');sDel('wdcs_chronicle');sDel('wdcs_legacy');sDel('wdcs_lastlife');for(let i=0;i<SLOT_MAX;i++)slotDel(i);$('#app').innerHTML=filesHTML();alert('所有存档已清空。');}}
+  else if(a==='clearAll'){if(confirm('确定清空所有存档？\n\n包括：自动档、所有档位、备份、图鉴、史册、轮回记录。\n\n此操作不可撤销！')){sDel('wdcs_save');sDel('wdcs_backup');sDel('wdcs_dex');sDel('wdcs_chronicle');sDel('wdcs_legacy');sDel('wdcs_lastlife');sDel('wdcs_daoguo');for(let i=0;i<SLOT_MAX;i++)slotDel(i);$('#app').innerHTML=filesHTML();alert('所有存档已清空。');}}
   else if(a==='expSave'){exportSave();}
   else if(a==='impSave'){pickImport();}
   else if(a==='vchr'){$('#app').innerHTML='<h1 class="title">问道长生</h1><div class="sub">轮回史册</div>'+chronicleHTML()+'<div class="center" style="padding:8px"><button class="btn" data-a="back">'+tag('返　回','gray')+' 回到卷首</button></div>';}
