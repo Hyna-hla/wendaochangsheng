@@ -475,8 +475,13 @@ const GF={黄:{c:1.0},玄:{c:1.25},地:{c:1.55},天:{c:1.9}};
 const AWAKEN=['剑心通明（杀伤+20%）','丹药精通（丹效+30%）','气运如虹（仙缘+2）','肉身成圣（气血上限+25%）',
  '天眼通（神识+3）','双修悟道（双修收益+50%）','聚灵体（修炼+15%）','心如磐石（道心+3，挡一次心魔）',
  '万里神行（遁速+3）','灵兽亲和（兽伴更强 · 易遇灵兽 · 化险为夷）','大道之体（六维+1）'];
-const WU_TREES=[{n:'剑道',d:'杀伤+3%/级'},{n:'丹道',d:'丹药效果+8%/级 · 炼丹更稳'},{n:'体道',d:'气血上限+2%/级'},
- {n:'遁法',d:'遁走成功率+4%/级'},{n:'有情道',d:'好感收益+10%/级'},{n:'器道',d:'器效+4%/级 · 炼器更稳'}];
+const WU_TREES=[
+ {n:'剑道',d:'杀伤+3%/级',mile:[{lv:3,d:'剑意凛然·暴击率+5%'},{lv:6,d:'剑气随行·普攻附加战力5%伤害'},{lv:10,d:'剑气余韵·普攻20%追加一击'}]},
+ {n:'丹道',d:'丹效+8%/级·炼丹更稳',mile:[{lv:3,d:'丹炉通明·炼丹成功率+10%'},{lv:6,d:'药性入髓·丹效额外+25%'},{lv:10,d:'万无一失·炸炉不损药材'}]},
+ {n:'体道',d:'气血上限+2%/级',mile:[{lv:3,d:'体魄如山·战败死劫-8%'},{lv:6,d:'气血自生·月回复提升至5%'},{lv:10,d:'不灭肉身·每战免死一次'}]},
+ {n:'遁法',d:'遁走成功率+4%/级',mile:[{lv:3,d:'遁里逃生·遁走成功回血10%'},{lv:6,d:'先机在握·战斗首回合闪避30%'},{lv:10,d:'遁法大成·遁走失败敌亦扑空'}]},
+ {n:'有情道',d:'好感收益+10%/级',mile:[{lv:3,d:'一见如故·新识好感+3'},{lv:6,d:'情场得意·好感获取+25%'},{lv:10,d:'情根深种·双修降至50·结侣降至70'}]},
+ {n:'器道',d:'器效+4%/级·炼器更稳',mile:[{lv:3,d:'爱器有灵·耐久损耗-30%'},{lv:6,d:'灵蕴充盈·启灵词条上限+1'},{lv:10,d:'点石成金·启灵花费减半'}]}];
 const ALCH=[
   {n:'聚气丹',need:{'百草露':2},d:'修为+2',tier:1},
   {n:'回春丹',need:{'百草露':1,'赤芝':1},d:'气血+50',tier:1},
@@ -538,17 +543,30 @@ const YL=[
 /* ===================== 仙体双修 · 炼体体系（参考《一念逍遥》） ===================== */
 const BODY_REALMS=[
  {n:'凡胎',need:0,hp:0,pw:1.00,d:'肉体凡胎，未经淬炼'},
- {n:'铜皮',need:150,hp:100,pw:1.08,d:'皮如铜铸，刀兵难入'},
- {n:'铁骨',need:400,hp:280,pw:1.16,d:'骨如精铁，气血绵长'},
- {n:'玉髓',need:850,hp:540,pw:1.25,d:'髓如玉浆，肉身通灵'},
- {n:'金肌',need:1500,hp:930,pw:1.35,d:'肌如金铸，力可裂石'},
- {n:'金刚不坏',need:2500,hp:1450,pw:1.46,d:'金刚不坏，水火不侵'},
- {n:'玄黄圣体',need:4100,hp:2250,pw:1.58,d:'玄黄之气淬入肉身'},
- {n:'不灭金身',need:6800,hp:3500,pw:1.72,d:'金身不灭，滴血重生'}];
+ {n:'铜皮',need:300,hp:100,pw:1.15,d:'守御+8% · 皮如铜铸，刀兵难入'},
+ {n:'铁骨',need:3000,hp:280,pw:1.35,d:'气血×5 · 骨如精铁，气血绵长'},
+ {n:'玉髓',need:30000,hp:540,pw:1.60,d:'气血×10 · 月回复+2% · 髓如玉浆'},
+ {n:'金肌',need:300000,hp:930,pw:1.95,d:'气血×10 · 暴击率+4% · 力可裂石'},
+ {n:'金刚不坏',need:1000000,hp:1450,pw:2.40,d:'气血×10 · 常驻减伤5% · 水火不侵'},
+ {n:'玄黄圣体',need:3500000,hp:2250,pw:3.00,d:'气血×10 · 战力+6% · 玄黄淬体'},
+ {n:'不灭金身',need:10000000,hp:3500,pw:3.80,d:'气血×10 · 每战复活一次 · 最终减伤40%'}];
+const BODY_PASSIVE=['','','气血上限+5%','月回复+2%','暴击率+4%','常驻减伤5%','战力+6%','每战复活一次·最终减伤40%'];
+/* 炼体气血指数乘区：每次突破乘对应倍率——铜皮至不灭金身，坦度累计百万倍 */
+const BODY_HP_MUL=[1,5,10,10,10,10,10,10];
+/* 不灭金身：每战复活一次——金身碎而复聚，气血灵力尽数归盈 */
+function bodyRevive(p){
+ if(bodyLv(p)>=7){
+  p.hp=p.hpM;p.mp=p.mpM;
+  say('<b style="color:#D4A017">【不灭金身·涅槃】金身寸寸碎裂，又在金光中重聚——你自毁灭中走了回来，气血灵力尽数归盈！（每战一次）</b>','g');
+  markDeed('不灭金身·涅槃重生');
+  return true;
+ }
+ return false;
+}
 function bodyLv(p){return p.bodyLv||0;}
 function bodyNext(p){return BODY_REALMS[bodyLv(p)+1];}
 function bodyGain(p){
- let v=12*(1+p.att[0]*0.02)*(1+(p.wuT[2]||0)*0.05)*(1+zwStat(p,'cult')/100)*(1+p.rIdx*0.35);
+ let v=25*(1+p.att[0]*0.02)*(1+(p.wuT[2]||0)*0.05)*(1+zwStat(p,'cult')/100)*(1+p.rIdx*0.5);
  if(p.eles.includes('土'))v*=1.15;
  if(p.eles.includes('金'))v*=1.10;
  if(p.con==='九阳圣体')v*=1.30;
@@ -567,8 +585,9 @@ function quiti(){
  if(nx&&p.bodyExp>=nx.need){
   p.bodyExp-=nx.need;p.bodyLv++;
   const R=BODY_REALMS[p.bodyLv];
-  p.hpM=Math.round(p.hpM*1.04);p.hp=Math.min(Math.round(p.hp*1.04),p.hpM);
-  txt+='<br><b class="lg-g">【炼体突破】皮开肉绽中血肉新生，你踏入「'+R.n+'」！气血上限×1.04 · 战力×'+R.pw.toFixed(2)+'（'+R.d+'）</b>';
+  p.hpM=Math.round(p.hpM*BODY_HP_MUL[p.bodyLv]);p.hp=p.hpM;
+  if(p.bodyLv===2){p.hpM=Math.round(p.hpM*1.05);p.hp=p.hpM;}
+  txt+='<br><b class="lg-g">【炼体突破】皮开肉绽中血肉新生，你踏入「'+R.n+'」！气血上限×'+BODY_HP_MUL[p.bodyLv]+' · 战力×'+R.pw.toFixed(2)+(BODY_PASSIVE[p.bodyLv]?' · <b>'+BODY_PASSIVE[p.bodyLv]+'</b>':'')+'（'+R.d+'）</b>';
   markDeed('炼体突破·'+R.n);
   p.merit+=1;
  }
@@ -953,8 +972,9 @@ function setBonus(p){
 function qiLing(slot){
  const p=G.c,it=p.equip&&p.equip[slot];if(!it||it.dur<=0){toast('该槽位无可用法器');render();return;}
  it.affix=it.affix||[];
- if(it.affix.length>=3){toast('灵蕴已满，至多三道词条');render();return;}
- const cost=[300,900,2700][it.affix.length];
+ const qdCap=p.wuT[5]>=6?4:3;
+ if(it.affix.length>=qdCap){toast('灵蕴已满，至多'+qdCap+'道词条');render();return;}
+ const cost=Math.floor([300,900,2700,8100][it.affix.length]*(p.wuT[5]>=10?0.5:1));
  if(p.stones<cost){toast('灵石不足（需'+cost+'）');render();return;}
  p.stones-=cost;
  const aff=AFFIX_POOL[RI(AFFIX_POOL.length)];
@@ -1175,11 +1195,11 @@ function cultGain(p,closed){
 function needOf(p){return RL[p.rIdx].need;}
 function addCult(p,v){if(p)p.cult=CL(p.cult+v,0,Math.max(9999,needOf(p)*1.5));}
 function heal(p,k,v){const mul=danMul(p)*Math.max(1,PW[p.rIdx]/26)*((G&&G.cb&&G.cb.healCut)?0.5:1); /* 禁疗词缀：回复减半 */if(k==='hp')p.hp=CL(p.hp+v*mul,0,p.hpM);else p.mp=CL(p.mp+v*mul,0,p.mpM);}
-function danMul(p){const wood=p.eles.includes('木')?1.1:1;return (1+p.wuT[1]*0.08+((p.awaken||[]).some(a=>a.startsWith('丹药'))?0.3:0)+(wood-1))*(1+metaBonus(p,'dan')/100);}
+function danMul(p){const wood=p.eles.includes('木')?1.1:1;return (1+p.wuT[1]*0.08+((p.awaken||[]).some(a=>a.startsWith('丹药'))?0.3:0)+(wood-1)+(p.wuT[1]>=6?0.25:0))*(1+metaBonus(p,'dan')/100);}
 function sprB(it){const s=it&&it.spr;return s?(SPR_B[s.lv]+(s.pact?0.15:0)):0;}
 function equipB(p,slot){const it=p.equip&&p.equip[slot];if(!it||it.dur<=0)return 0;return it.b*(1+(p.wuT[5]||0)*0.04)*(1+sprB(it));}
-function power(p){return PW[p.rIdx]*(0.92+p.stg*0.09)*(1+p.wuT[0]*0.03)*((p.awaken||[]).some(a=>a.startsWith('剑心'))?1.2:1)*(p.con==='剑灵体'?1.3:1)*(1+equipB(p,'w'))*(1+affixSumAll(p,'power')/100)*(1+affixSumAll(p,'powerPct')/100)*(1+zwStat(p,'atk')/100)*(zwEquipped(p).length>=6?1.15:1)*(setBonus(p)?setBonus(p).atk:1)*(BODY_REALMS[bodyLv(p)]?BODY_REALMS[bodyLv(p)].pw:1)*(1+bondSum(p,'pow')/100)*(1+metaBonus(p,'pow')/100);}
-function critCalc(p){let rate=5;if(p.eles.includes('雷'))rate+=15;rate+=affixSumAll(p,'crit')+zwStat(p,'crit')+bondSum(p,'crit')+metaBonus(p,'crit');if((p.awaken||[]).some(a=>a.startsWith('天眼通')))rate+=10;rate=CL(rate,0,95);let dmg=150+affixSumAll(p,'critDmg')+zwStat(p,'critDmg')+bondSum(p,'critDmg');return {rate:rate,dmg:dmg/100};}
+function power(p){return PW[p.rIdx]*(0.92+p.stg*0.09)*(1+p.wuT[0]*0.03)*((p.awaken||[]).some(a=>a.startsWith('剑心'))?1.2:1)*(p.con==='剑灵体'?1.3:1)*(1+equipB(p,'w'))*(1+affixSumAll(p,'power')/100)*(1+affixSumAll(p,'powerPct')/100)*(1+zwStat(p,'atk')/100)*(zwEquipped(p).length>=6?1.15:1)*(setBonus(p)?setBonus(p).atk:1)*(BODY_REALMS[bodyLv(p)]?BODY_REALMS[bodyLv(p)].pw:1)*(1+bondSum(p,'pow')/100)*(1+metaBonus(p,'pow')/100)*(bodyLv(p)>=6?1.06:1);}
+function critCalc(p){let rate=5;if(p.eles.includes('雷'))rate+=15;rate+=affixSumAll(p,'crit')+zwStat(p,'crit')+bondSum(p,'crit')+metaBonus(p,'crit')+(p.wuT[0]>=3?5:0);if((p.awaken||[]).some(a=>a.startsWith('天眼通')))rate+=10;rate=CL(rate,0,95);let dmg=150+affixSumAll(p,'critDmg')+zwStat(p,'critDmg')+bondSum(p,'critDmg')+(bodyLv(p)>=4?4:0);return {rate:rate,dmg:dmg/100};}
 function powerDetail(){
  const p=G.c;
  const base=PW[p.rIdx];
@@ -1213,7 +1233,7 @@ function powerDetail(){
   opts:[{t:'关闭',d:'返回',fx:()=>{render();}}]};
  render();
 }
-function guardVal(p){const earth=p.eles.includes('土')?1.1:1;return Math.round((p.rIdx*8+p.stg*3+equipB(p,'a')+zwStat(p,'def')+affixSumAll(p,'guard'))*earth*(setBonus(p)?setBonus(p).def:1)*PW[p.rIdx]/26*(1+bondSum(p,'guard')/100)*(1+metaBonus(p,'guard')/100));}
+function guardVal(p){const earth=p.eles.includes('土')?1.1:1;return Math.round((p.rIdx*8+p.stg*3+equipB(p,'a')+zwStat(p,'def')+affixSumAll(p,'guard'))*earth*(setBonus(p)?setBonus(p).def:1)*PW[p.rIdx]/26*(1+bondSum(p,'guard')/100)*(1+metaBonus(p,'guard')/100)*(bodyLv(p)>=1?1.08:1));}
 function applyAwakenEffect(p,aw){
  if(aw.startsWith('气运如虹'))p.att[5]=CL(p.att[5]+2,1,20);
  if(aw.startsWith('天眼通'))p.att[2]=CL(p.att[2]+3,1,20);
@@ -1323,7 +1343,7 @@ const core='<div class="statgrid">'+
   '<div>气血 '+pb(p.hp,p.hpM,'#C05F55')+' '+fmtN(Math.ceil(p.hp))+'/'+fmtN(p.hpM)+'</div>'+
   '<div>灵力 '+pb(p.mp,p.mpM,'#5E8FAE')+' '+fmtN(Math.ceil(p.mp))+'/'+fmtN(p.mpM)+'</div>'+
   '<div>修为 '+pb(p.cult,needOf(p),'#A87E2E')+' '+fmtN(p.cult)+'/'+fmtN(needOf(p))+' · 预计'+(Math.ceil((needOf(p)-p.cult)/Math.max(cultGain(p,false),0.1)))+'月突破</div>'+
- '<div>体魄 '+BODY_REALMS[bodyLv(p)].n+' '+pb(p.bodyExp||0,bodyNext(p)?bodyNext(p).need:1,'#B08A4E')+' '+(p.bodyExp||0).toFixed(0)+'/'+(bodyNext(p)?fmtN(bodyNext(p).need):'圆满')+' · 淬体×'+BODY_REALMS[bodyLv(p)].pw.toFixed(2)+'</div>'+
+ '<div>体魄 '+BODY_REALMS[bodyLv(p)].n+' '+pb(p.bodyExp||0,bodyNext(p)?bodyNext(p).need:1,'#B08A4E')+' '+(p.bodyExp||0).toFixed(0)+'/'+(bodyNext(p)?fmtN(bodyNext(p).need):'圆满')+' · 淬体×'+BODY_REALMS[bodyLv(p)].pw.toFixed(2)+((p.bodyJin||0)>0?' · 金身'+p.bodyJin+'层':'')+'</div>'+
   '</div>'+
  (abn?'<div class="danger" style="font-size:13px;background:rgba(192,95,85,0.1);padding:4px 8px;border-radius:4px">⚠ 异常状态：'+abn.split('·').map(a=>'<span style="color:#C05F55;font-weight:bold">'+a+'</span>').join(' · ')+'</div>':'')+
  '<div style="font-size:12px;color:var(--sub);margin-top:4px">月令「'+YL[p.m-1].n+'」'+YL[p.m-1].d+' · '+tideHint()+' · 盛会 '+(p.nextGala&&p.nextGala>p.y?(p.nextGala-p.y)+'年后':'将启')+' · 主线：'+questHint()+'</div>';
@@ -1405,7 +1425,9 @@ function centerHTML(){
   }
   body=logBox()+'<div class="panel"><span class="bar-title">静室 · 日常</span><div class="hr"></div><div class="row">'+
   btn('cult','打坐修炼（1月）','jade','','')+
-  btn('quiti','淬体炼体（1月）','gold','','')+
+  btn('quiti','淬体（1月）','gold','','')+
+  btn('quiti1y','淬体一年','gold','','')+
+  btn('quiti10y','淬体十年','gold','','')+
   btn('closed','闭关……','bam','','')+
   btn('closed1y','闭关一年','bam','','')+
   btn('closed3y','闭关三年','bam','','')+
@@ -1582,8 +1604,8 @@ else if(p.view==='soc'){
       ops='<span class="row">'+btn('talk','叙话','pink','','',n.id)+' '+
         btn('gift','赠礼(30石)','pink','','',n.id)+' '+
         (af>=20?btn('lunDao','论道','bam','','',n.id):'')+
-        (af>=60&&oppositeSex?btn('dual','双修互益','pink','情缘','',n.id):'')+
-        (af>=80&&!p.spouse&&oppositeSex?btn('marry','结为道侣','pink','誓约','',n.id):'')+'</span>';
+        (af>=(p.wuT[4]>=10?50:60)&&oppositeSex?btn('dual','双修互益','pink','情缘','',n.id):'')+
+        (af>=(p.wuT[4]>=10?70:80)&&!p.spouse&&oppositeSex?btn('marry','结为道侣','pink','誓约','',n.id):'')+'</span>';
     }else{
       ops='<span style="color:var(--sub);font-size:12px">身在 '+REGIONS[n.loc].n.split(' · ')[1]+'</span>';
     }
@@ -1597,7 +1619,12 @@ else if(p.view==='soc'){
   body+=bondBookHTML(p);
   }
  else if(p.view==='wu'){
-  let tr=WU_TREES.map((t,i)=>'<div class="row" style="justify-content:space-between"><span><b>'+t.n+'</b> Lv.'+p.wuT[i]+' <small>'+t.d+'</small></span>'+btn('learnWu','点亮(1点)','bam','','',i)+'</div>').join('');
+  let tr=WU_TREES.map((t,i)=>{
+   const lv=p.wuT[i];const cost=lv+1;const maxed=lv>=10;
+   const mile=(t.mile||[]).map(m=>'<small style="color:'+(lv>=m.lv?'#6a9c72':'#9a917e')+'">'+(lv>=m.lv?'✦ ':'◇ ')+m.lv+'重·'+m.d+'</small>').join('<br>');
+   return '<div class="opt" style="cursor:default"><div class="row" style="justify-content:space-between"><span><b>'+t.n+'</b> Lv.'+lv+' <small>'+t.d+'</small></span>'+(maxed?'<b class="lg-g">圆满</b>':btn('learnWu','参悟('+cost+'点)','bam','',p.wu<cost,i))+'</div>'+(mile?'<div style="margin:2px 0 2px 8px">'+mile+'</div>':'')+'</div>';
+  }).join('');
+  tr+='<div class="hr"></div><div class="row" style="justify-content:space-between"><span><b>以悟入道</b> <small>3悟道点凝作100道基点（真文台淬炼五行）</small></span>'+btn('wuToDaoji','化悟(3点)','vio','',p.wu<3)+'</div>';
   let shenTxt='';
   if(p.shen&&p.shen.n)shenTxt='<div class="hr"></div><div style="color:#7a5fa8;font-weight:bold">已觉醒神通「'+p.shen.n+'」——战斗中可引天雷回春。</div>';
   else if(p.gongfa&&p.gongfa.g==='天')shenTxt='<div class="hr"></div><div class="row" style="justify-content:space-between"><span><b class="lg-g">功法神通</b> <small>天阶功法圆满可自创神通 · 需悟道点3</small></span>'+btn('awakenShen','觉醒神通（3悟道点）','red','',(p.wu||0)<3)+'</div>';
@@ -1651,7 +1678,7 @@ function pickHTML(){
 }
 
 /* ===================== 炼丹 ===================== */
-function alchRate(p){return Math.round(CL(52+p.wuT[1]*4+((p.awaken||[]).some(a=>a.startsWith('丹药'))?15:0)+p.att[2]*0.5,25,95));}
+function alchRate(p){return Math.round(CL(52+p.wuT[1]*4+((p.awaken||[]).some(a=>a.startsWith('丹药'))?15:0)+p.att[2]*0.5+(p.wuT[1]>=3?10:0),25,95));}
 function cntHerb(n){return rd().herbs.filter(h=>h.n===n).length;}
 function useHerb(n,k){const p=rd();for(let i=0;i<k;i++){const idx=p.herbs.findIndex(h=>h.n===n);if(idx<0)return false;p.herbs.splice(idx,1);}return true;}
 function alchHTML(){
@@ -1683,7 +1710,8 @@ function craftPill(i){
   }else{
    const dmg=Math.max(3,Math.floor(p.hpM*0.08));
    p.hp=Math.max(1,p.hp-dmg);
-   say('<b class="lg-r">炸炉！</b>火光冲天，草药化作飞灰，你被气浪掀翻在地（气血-'+dmg+'）。','r');
+   if(p.wuT[1]>=10){Object.keys(r.need).forEach(k=>{for(let n2=0;n2<r.need[k];n2++)p.herbs.push({n:k,v:({'百草露':15,'赤芝':40,'百年野参':120,'雪魄莲':260,'千载空青':520,'九叶还魂草':900})[k]||50});});say('<b class="lg-r">炸炉！</b>火光冲天——但丹道通神，<b>药材竟丝毫无损</b>（气血-'+dmg+'）。','r');}
+   else say('<b class="lg-r">炸炉！</b>火光冲天，草药化作飞灰，你被气浪掀翻在地（气血-'+dmg+'）。','r');
   }
   checkAuto();
 }
@@ -1823,6 +1851,7 @@ function sellOre(nm,all){
  render();
 }
 function wearEq(p,slot,n){
+ if(p.wuT[5]>=3)n=Math.ceil(n*0.7); /* 器道三重·爱器有灵 */
  const it=p.equip&&p.equip[slot];if(!it||it.dur<=0)return;
  if(it.spr){
   addSprExp(p,it,n);
@@ -2221,6 +2250,8 @@ function startCombat(e){
     for(let i=0;i<cnt;i++){const el=allEles[RI(allEles.length)];if(!e.eles.includes(el))e.eles.push(el);}
   }
   G.cb={e:e,charge:0,guard:false,shield:false,calm:false,turn:0,log:['【遭遇】'+e.n+' 挡路！（'+RL[e.r].n+' '+STG[e.stg]+' · 灵根：'+(e.eles.join('')||'未知')+'）']};
+  if(G.c.wuT[3]>=6){G.cb.dodge=true;G.cb.dodgeRate=0.3;G.cb.log.push('<span style="color:#6A9C72">【遁法·先机】你先机在握，首回合闪避率+30%。</span>');}
+  if(bodyLv(G.c)>=7)G.cb.log.push('<span style="color:#D4A017">【不灭金身】万法不侵——所受最终伤害-40%。</span>');
   render();
 }
 function cbl(s){G.cb.log.push(s);}
@@ -2242,7 +2273,8 @@ function enemyStrike(){
   else e.skCd--;
  }
  ed*=(e.awkMul||1);
- ed*=(1-Math.min(0.5,metaBonus(p,'dmgCut')/100)); /* 守阵真文与五行道基之压制 */
+ ed*=(1-Math.min(0.5,metaBonus(p,'dmgCut')/100+(bodyLv(p)>=5?0.05:0)+((p.bodyJin||0)*0.005))); /* 守阵/道基/金刚不坏/金身淬炼 */
+ if(bodyLv(p)>=7)ed*=0.6; /* 不灭金身·独立乘区最终减伤40% */
  /* 守御改为境界缩放的百分比减伤：守御≈敌战力0.6倍时减伤50%，上限75%，并保留4%保底伤害 */
  const g=guardVal(p);
  const mit=CL(g/(g+e.pw*0.6/(e.wall||1)),0,0.9); /* 坚壁：守御减免大增 */
@@ -2286,6 +2318,7 @@ function cbFight(opt){
    const fireBonus=(p.eles.includes('火')?1.15:1)*(p.con==='九阳圣体'?1.3:1);
    const wuxingMul=wuxingKeMul(p.eles,e.eles);
    let d=power(p)*0.32*(big?2.3:1)*(0.85+Math.random()*0.3)*sup*wuxingMul-(2+e.r*3);
+   if(p.wuT[0]>=6)d+=power(p)*0.05; /* 剑道六重·剑气随行 */
    d=Math.max(1,Math.floor(d*fireBonus));
    const crit=critCalc(p);const isCrit=D100()<=crit.rate;if(isCrit)d=Math.floor(d*crit.dmg);
    if(wuxingMul>1.05)cbl('<span style="color:#C49A5C">【五行克制】你的'+p.eles.join('')+'灵根克制敌方'+e.eles.join('')+'，伤害提升！</span>');
@@ -2312,6 +2345,7 @@ if(big){
     const dd=discipleTakeMaster();
     if(dd>0)e.hp-=dd;
    }
+   if(p.wuT[0]>=10&&e.hp>0&&D100()<=20){const d2=Math.max(1,Math.floor(power(p)*0.32*0.6*(0.85+Math.random()*0.3)*sup-(2+e.r*3)));e.hp-=d2;cbl('<span style="color:#C49A5C">【剑气余韵】剑意未尽，余剑再斩 '+fmtN(d2)+'！</span>');}
    if(isCrit&&e.hp>0)zwShaReal(p,c);
   }else if(opt==='chg'){
     if(p.mp<10){say('灵力不足，无法蓄势！','r');render();return;}
@@ -2323,11 +2357,13 @@ else if(opt==='flee'){
     const windBonus=p.eles.includes('风')?15:0;
     const ch=CL(30+p.att[3]*3+p.wuT[3]*4+windBonus+zwStat(p,'flee')+bondSum(p,'flee')-(e.r-p.rIdx)*15+(e.hp<e.hpM*0.3?15:0),5,92);
     if(D100()<=ch){
+     if(p.wuT[3]>=3)p.hp=CL(p.hp+Math.round(p.hpM*0.1),0,p.hpM);
      G.cb=null;
-     if(G.mr){const m=G.mr;G.mr=null;say('<b class="lg-g">遁光破开秘境结界，你连滚带爬逃出生天</b>——宝物再多，也得有命拿。【'+m.n+'】在身后訇然闭合。','g');}
-     else say('<b class="lg-g">足下遁光乍起——走脱了！</b>','g');
+     if(G.mr){const m=G.mr;G.mr=null;say('<b class="lg-g">遁光破开秘境结界，你连滚带爬逃出生天</b>——宝物再多，也得有命拿。【'+m.n+'】在身后訇然闭合。'+(p.wuT[3]>=3?'（遁里逃生·气血回复10%）':''),'g');}
+     else say('<b class="lg-g">足下遁光乍起——走脱了！</b>'+(p.wuT[3]>=3?'（遁里逃生·气血回复10%）':''),'g');
      afterAction();return;}
-    cbl('<span style="color:#C05F55">遁法被一眼看破，衣角被罡风削去一片！</span>');
+    if(p.wuT[3]>=10){c.stun=true;cbl('<span style="color:#6A9C72">【遁法大成】你身形虚晃，'+e.n+'扑了个空，自失一回合！</span>');}
+    else cbl('<span style="color:#C05F55">遁法被一眼看破，衣角被罡风削去一片！</span>');
    }
   else if(opt==='talk'){
    if(p.mp<5){say('灵力不足，无法言语周旋！','r');render();return;}
@@ -2449,6 +2485,7 @@ function endCombatLost(){
   const gap=e.r-p.rIdx;
   let dc=gap>=2?60:gap===1?30:14;
   if(D100()<=dc){
+   if(bodyRevive(p)){G.cb=null;G.mr=null;afterAction();return;}
    say('守层之主的最后一击穿透了护体灵光。<b class="lg-r">秘境的黑暗吞没了一切——你的名字被风带走。</b>');die('殒命');return;
   }
   const lost=Math.floor(p.stones*0.3);p.stones-=lost;p.hp=Math.max(1,p.hpM*0.2);
@@ -2478,7 +2515,10 @@ function endCombatLost(){
  const gap=e.r-p.rIdx;
  let dc=gap>=2?60:gap===1?30:12;
  if((p.awaken||[]).some(a=>a.startsWith('灵兽')))dc=Math.max(5,dc-8);
+ if(p.wuT[2]>=3)dc-=8; /* 体道三重·体魄如山 */
+ if(p.wuT[2]>=10&&!(c.ti10)){c.ti10=1;p.hp=Math.max(1,Math.floor(p.hpM*0.15));if(!p.abn.includes('重伤'))p.abn.push('重伤');say('<b class="lg-g">【体道·不灭】千钧一发，肉身记忆轰然爆发——你硬生生撑住了濒死一击！（重伤·每战一次）</b>','g');afterAction();return;}
  if(D100()<=dc){
+  if(bodyRevive(p)){G.cb=null;afterAction();return;}
   say('那最后一击穿透了护体灵光。<b class="lg-r">天地复归寂静——你的名字被风带走。</b>');die('殒命');return;
  }
  const lost=Math.floor(p.stones*0.5);p.stones-=lost;p.hp=Math.max(1,p.hpM*0.15);
@@ -2864,7 +2904,7 @@ function monthTick(p){
   }
   const yl=YL[p.m-1];
   if(yl.fx)say('<span class="lg-s">【月令·'+yl.n+'】'+yl.d+'。</span>');
-  p.hp=CL(p.hp+Math.max(3,Math.round(p.hpM*0.03)),0,p.hpM);p.mp=CL(p.mp+Math.max(4,Math.round(p.mpM*0.04)),0,p.mpM);
+  p.hp=CL(p.hp+Math.max(3,Math.round(p.hpM*((p.wuT[2]>=6?0.05:0.03)+(bodyLv(p)>=3?0.02:0)))),0,p.hpM);p.mp=CL(p.mp+Math.max(4,Math.round(p.mpM*0.04)),0,p.mpM);
   // 新系统月度逻辑
   if(typeof lineageTick==='function')lineageTick();
   if(typeof childTick==='function')childTick();
@@ -3167,10 +3207,14 @@ function doCult(){const p=G.c,g=cultGain(p,false);
  afterAction();
 }
 function closedDoors(){
- const inp=prompt('闭关多少个月？（1~600 · 双倍速率 · 大事会惊醒你）','36');
- if(inp===null)return;
- const mo=CL(parseInt(inp)||0,1,600);if(!mo)return;
- closedDoorsN(mo);
+ /* 手机端原生prompt会被拦截——改用游戏内择期面板 */
+ const opts=[[6,'半年'],[12,'一年'],[36,'三年'],[60,'五年'],[120,'十年'],[360,'三十年'],[600,'百年']]
+  .map(x=>({t:'闭关'+x[1],d:'修为双倍速进 · 大事会惊醒你',fx:()=>{closedDoorsN(x[0]);}}));
+ opts.push({t:'罢了',d:'改日再修',fx:()=>{render();}});
+ G.ev={theme:'bam',title:'闭关 · 择期',
+  body:'择一处静室，收束心神。闭关期间修为倍进，然大事必惊你出关。',
+  opts:opts};
+ render();
 }
 function closedDoorsN(mo){
  const p=G.c,startY=p.y,startM=p.m,sc=p.cult;
@@ -3250,6 +3294,29 @@ function explore(){
 }
 
 /* ===================== 灵兽 · 出身际遇（通用抉择事件） ===================== */
+function quitiN(mo){
+ const p=G.c;
+ const stExp=Math.floor(p.bodyExp||0),stLv=bodyLv(p);
+ let brk=0;
+ for(let i=0;i<mo;i++){
+  p.bodyExp=(p.bodyExp||0)+Math.floor(bodyGain(p));
+  if(bodyLv(p)===7&&(p.bodyExp||0)>=2000&&(p.bodyJin||0)<30){
+   p.bodyExp-=2000;p.bodyJin=(p.bodyJin||0)+1;p.hpM=Math.round(p.hpM*1.03);p.hp=p.hpM;
+   say('<b class="lg-g">【金身淬炼·第'+p.bodyJin+'层】不灭金身愈凝愈坚——气血×1.03 · 最终减伤+0.5%。</b>','g');
+  }
+  while(bodyLv(p)+1<BODY_REALMS.length&&(p.bodyExp||0)>=BODY_REALMS[bodyLv(p)+1].need){
+   p.bodyExp-=BODY_REALMS[bodyLv(p)+1].need;p.bodyLv++;
+   const R=BODY_REALMS[p.bodyLv];
+   p.hpM=Math.round(p.hpM*BODY_HP_MUL[p.bodyLv]);p.hp=p.hpM;
+   if(p.bodyLv===2){p.hpM=Math.round(p.hpM*1.05);p.hp=p.hpM;}
+   say('<b class="lg-g">【炼体突破】皮开肉绽中血肉新生，你踏入「'+R.n+'」！气血上限×'+BODY_HP_MUL[p.bodyLv]+' · 战力×'+R.pw.toFixed(2)+(BODY_PASSIVE[p.bodyLv]?' · <b>'+BODY_PASSIVE[p.bodyLv]+'</b>':'')+'（'+R.d+'）</b>','g');
+   markDeed('炼体突破·'+R.n);p.merit+=1;brk++;
+  }
+  if(!monthTick(p))return;
+ }
+ say('<span class="lg-s">淬体 '+mo+' 月 · 突破'+brk+'次 · 体魄 '+stExp+' → '+Math.floor(p.bodyExp||0)+'</span>','s');
+ checkAuto();
+}
 function beastEvent(){
  G.ev={theme:'bam',title:'山中幼兽',
   body:'草丛窸窣作响。一只受了伤的幼兽蹒跚而出，湿漉漉的眼睛望定你——灵性未泯，分明是在求救。',
@@ -3911,6 +3978,8 @@ function affAdd(id,v){
   const p=G.c;
   v=Math.round(Math.round(v*(p.charmBonus||1))*(1+(p.wuT[4]?p.wuT[4]*0.1:0)));
   if(p.m===3)v=Math.ceil(v*1.5);
+  if((p.rel[id]||0)===0&&p.wuT[4]>=3)v+=3; /* 有情道三重·一见如故 */
+  if(p.wuT[4]>=6)v=Math.round(v*1.25); /* 有情道六重·情场得意 */
   v=Math.round(v*(1+metaBonus(p,'npc')/100));
   if(p.rel[id]===undefined)dexRec('npc',npcName(id));
   p.rel[id]=CL((p.rel[id]||0)+v,0,100);
@@ -3993,10 +4062,19 @@ function marry(id){
   render();
 }
 function learnWu(i){
- const p=G.c;if(p.wu<1||p.wuT[i]>=10){render();return;}
- p.wu--;p.wuT[i]++;
+ const p=G.c;const cost=(p.wuT[i]||0)+1;
+ if(p.wu<cost||p.wuT[i]>=10){render();return;}
+ p.wu-=cost;p.wuT[i]++;
  if(i===2){p.hpM=Math.round(p.hpM*1.02);p.hp=Math.min(p.hp+Math.floor(p.hpM*0.02),p.hpM);}
- say(WU_TREES[i].n+'参悟加深至 '+p.wuT[i]+' 层。','g');render();
+ say(WU_TREES[i].n+'参悟加深至 '+p.wuT[i]+' 层（耗'+cost+'悟道点）。','g');render();
+}
+function wuToDaoji(){
+ const p=G.c;
+ if((p.wu||0)<3){toast('悟道点不足');render();return;}
+ p.wu-=3;p.daoji=p.daoji||{pts:0,lv:{}};
+ p.daoji.pts=(p.daoji.pts||0)+100;
+ say('你将一缕明悟烙入道基（道基点+100）。','g');
+ render();
 }
 
 /* ===================== 自由行动 ===================== */
@@ -5309,7 +5387,7 @@ const EPIPHANY_TYPES=[
    return sk.n+'觉醒！效果+30%';
  }},
  {id:'wuBurst',n:'悟道大增',d:'心神与天地共鸣，悟道点暴涨！',fx:p=>{
-   const gain=5+RI(6);
+   const gain=2+RI(3);
    p.wu=Math.min(99,p.wu+gain);
    return '悟道点+'+gain;
  }},
@@ -5633,6 +5711,8 @@ case 'pr':
   case 'fcgo':{const ip=$('#fcmd');const val=ip?ip.value:'';if(ip)ip.value='';freeInput(val);break;}
   case 'cult':doCult();break;
   case 'quiti':quiti();break;
+  case 'quiti1y':quitiN(12);break;
+  case 'quiti10y':quitiN(120);break;
   case 'closed':closedDoors();break;
   case 'closed1y':closedDoorsN(12);break;
   case 'closed3y':closedDoorsN(36);break;
@@ -5688,6 +5768,7 @@ case 'rest':{const rm=p.m===11?1.5:1;
   case 'dual':dual(v);break;
   case 'marry':marry(v);break;
   case 'learnWu':learnWu(+v);break;
+  case 'wuToDaoji':wuToDaoji();break;
   case 'doSave':save();toast('已存档（本机）');break;
   case 'restart':if(confirm('丢弃当前进度？直接重开不计入轮回。')){sDel('wdcs_save');G=null;DEAD=false;C=null;render();}break;
   case 'btS':btSmall();break;
